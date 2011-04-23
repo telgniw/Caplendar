@@ -16,9 +16,17 @@ if(!mysql_select_db($DB_NAME)) {
 }
 mysql_set_charset('utf8', $conn);
 function insert($token, $uid, $name, $profile) {
+  $GLOBAL_ERROR = null;
   $query = "INSERT user (access_token, uid, name, profile_id, created) ".
     "VALUES ('$token', '$uid', '$name', '$profile', CURRENT_DATE()) ".
     "ON DUPLICATE KEY UPDATE ".
     "access_token='$token', uid='$uid', name='$name', profile_id='$profile';";
+  mysql_query($query) or $GLOBAL_ERROR = mysql_error($conn);
+}
+function update($token, $uid, $name, $profile) {
+  $GLOBAL_ERROR = null;
+  $query = "UPDATE user access_token='$token', name='$name', profile_id='$profile' ".
+    "WHERE uid='$uid';";
+  mysql_query($query) or $GLOBAL_ERROR = mysql_error($conn);
 }
 ?>

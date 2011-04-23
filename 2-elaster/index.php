@@ -11,56 +11,83 @@ $facebook = new Facebook(array(
 $session = $facebook->getSession();
 $me = null;
 if($session) {
-  $uid = $facebook->getUser();
-  $me = $facebook->api('/me');
+  try {
+    $uid = $facebook->getUser();
+    $me = $facebook->api('/me');
+  } catch (FacebookApiException $e) {
+    error_log($e);
+  }
 }
 ?>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>�a�Ϧ�ƾ�</title>
-  <style type="text/css">
-    #l {
-      float: left;
-    }
-    #r {
-      float: right;
-    }
-    #r div {
-      margin-bottom: 20px;
-    }
-  </style>
-  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-  <script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.11/jquery-ui.min.js"></script>
-  <script type="text/javascript" src="http://connect.facebook.net/zh_TW/all.js"></script>
+  <title>地圖行事曆</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/cupertino/jquery-ui-1.8.11.custom.css">	
+  <script type="text/javascript" src="/js/jquery-1.5.1.min.js"></script>
+  <script type="text/javascript" src="/js/jquery-ui-1.8.11.custom.min.js"></script>
 </head>
 <body>
+  <script type="text/javascript">
+    $('#fb-root').ready(function() {
+      $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
+        FB.init({
+          apiKey:   '8d955ca9f882c155282c7f3bbbda017c',
+          appId:    '<?php echo $facebook->getAppId(); ?>',
+          session:  <?php echo json_encode($session); ?>,
+          status:   true,
+          cookie:   true
+        });
+        <?php if(!$me): ?>
+        FB.Event.subscribe('auth.login', function() { window.location.reload(); });
+        <?php else: ?>
+        FB.Event.subscribe('auth.logout', function() { window.location.reload(); });
+        <?php endif ?>
+        $('.xfbml').each(function() {
+          FB.XFBML.parse(this);
+        });
+      });
+      $('#accordion').accordion({
+        fillSpace: true
+      });
+      $('.accordion-content div').each(function() {
+        $(this).css('margin-bottom', '20px');
+      });
+    });
+  </script>
   <div id="fb-root">
     <div id="l">
+      <?php if($me): ?>
+      <span>Hello, <?php echo $me['name']; ?>.</span>
+      <?php endif ?>
     </div>
     <div id="r">
-      <div><fb:login-button width="300" autologoutlink="true" perms="<?php echo $perms; ?>"></fb:login-button></div>
-    <?php if($me): ?>
-      <div>Hello, <?php echo $me['name']; ?>.</div>
-    <?php endif ?>
-      <div><fb:friendpile width="300" show-faces="true"></fb:friendpile></div>
-      <div><fb:like-box width="300" href="http://www.facebook.com/apps/application.php?id=208577865834024" stream="false" header="false"></fb:like-box></div>
+      <div id="accordion">
+        <div class="accordion-item">
+          <h3><a href="#">主選單</a></h3>
+          <div class="accordion-content">
+            <div class="xfbml"><fb:login-button width="250" autologoutlink="true" perms="<?php echo $perms; ?>"></fb:login-button></div>
+            <div class="xfbml"><fb:friendpile width="250" show-faces="true"></fb:friendpile></div>
+            <div class="xfbml"><fb:like-box width="250" href="http://www.facebook.com/apps/application.php?id=208577865834024" stream="false" header="false"></fb:like-box></div>
+          </div>
+        </div>
+        <?php if($me): ?>
+        <div class="accordion-item">
+          <h3><a href="#">行事曆</a></h3>
+          <div class="accordion-content">
+            <span>Haha!</span>
+          </div>
+        </div>
+        <div class="accordion-item">
+          <h3><a href="#">選項</a></h3>
+          <div class="accordion-content">
+            <span>Hello World!</span>
+          </div>
+        </div>
+        <?php endif ?>
+      </div>
     </div>
   </div>
-  <script type="text/javascript">
-    FB.init({
-      apiKey:   '8d955ca9f882c155282c7f3bbbda017c',
-      appId:    '<?php echo $facebook->getAppId(); ?>',
-      session:  <?php echo json_encode($session); ?>,
-      status:   true,
-      cookie:   true
-    });
-  <?php if(!$me): ?>
-    FB.Event.subscribe('auth.login', function() { window.location.reload(); });
-  <?php else: ?>
-    FB.Event.subscribe('auth.logout', function() { window.location.reload(); });
-  <?php endif ?>
-    FB.XFBML.parse($('#r')[0]);
-  </script>
 </body>
 </html>
