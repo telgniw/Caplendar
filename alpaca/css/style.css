@@ -1,0 +1,43 @@
+#fb-root {
+  width: 800px;
+  height: 100%;
+}
+#l {
+  position: fixed;
+  float: left;
+  top: 0;
+  right: 300px;
+  height: 100%;
+}
+#map {
+  width: 500px;
+  height: 100%;
+}
+#r {
+  position: fixed;
+  float: right;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+}
+#calendar-header {
+  width: 240px;
+  margin-top: 10px;
+  padding: 5px;
+}
+#calendar {
+  overflow: hidden;
+  width: 250px;
+  height: 300px;
+}
+#draggable {
+  margin: 10px;
+}
+#calendar .calendar-event {
+  display: block;
+  padding: 10px;
+}
+#calendar .calendar-event span {
+  display: block;
+}
