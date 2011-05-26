@@ -1,0 +1,34 @@
+#t {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2em;
+    width: 100%;
+    padding: .5em 0;
+    z-index: 100;
+}
+#t>.left, #t>.right {
+    margin: 0 1em;
+}
+#wrapper {
+    position: fixed;
+    top: 3em;
+    left: 0;
+    width: 100%;
+}
+#b{
+    width: 1000px;
+    margin: auto;
+}
+#b>.left {
+    width: 720px;
+}
+#b>.right {
+    width: 280px;
+}
+.left {
+    float: left;
+}
+.right {
+    float: right;
+}
