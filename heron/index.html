@@ -25,11 +25,8 @@
       $.getScript('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js', function() {
         $('#t').addClass('ui-widget-header ui-state-active');
         $('#b').height($(document).height()-$('#t').height());
-        $('#b>div').each(function() {
-            $(this).height($('#b').height());
-        });
+        $('#b>div').each(function() { $(this).height($('#b').height()); });
         {% if current_user %}
-        $('#b>.right').addClass('ui-widget-content ui-state-active');
         $('#map').gmap({
           position: [23.5, 121],
           template: '{{ dialog }}',
