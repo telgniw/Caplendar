@@ -69,13 +69,15 @@
         $('#b>div').each(function() { $(this).height($('#b').height()); });
         
         {% if current_user %}
-        $('#map').gmap({
-          position: [23.5, 121],
-          template: '{{ dialog }}',
-          css: {
-            width: $('#b>.float-left').width(),
-            height: $('#b>.float-left').height()
-          }
+        $.getJSON('/qry/geopt', function(res) {
+          $('#map').gmap({
+            position: res.data,
+            template: '{{ dialog }}',
+            css: {
+              width: $('#b>.float-left').width(),
+              height: $('#b>.float-left').height()
+            }
+          });
         });
         $('#menu').addClass('ui-widget-content').height('100%');
         {% endif %}

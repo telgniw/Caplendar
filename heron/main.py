@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
+GEOIP_KEY     = '07c5218d90f3894825d40b853a350bd557d5907878bbcd2cfde269ae3d8aebe0'
 FB_API_KEY    = '8d955ca9f882c155282c7f3bbbda017c'
 FB_APP_ID     = '208577865834024'
 FB_APP_SECRET = 'ba90c5d51930b3bfc651d0a1d6819884'
@@ -9,7 +10,7 @@ import facebook
 from db import *
 from datetime import *
 from django.utils import simplejson
-from google.appengine.api import memcache
+from google.appengine.api import memcache, urlfetch
 from google.appengine.api.datastore_types import GeoPt
 from google.appengine.ext import db, webapp
 from google.appengine.ext.webapp import template
@@ -49,16 +50,29 @@ class QueryHandler(BaseHandler):
         if what == 'menu':
             self.response.out.write(simplejson.dumps({
                 'data': [{
-                    'name': '行程',
-                    'qry': 'event'
+                    'name': '行程'
                 }, {
-                    'name': '帳號',
-                    'qry': 'account'
+                    'name': '好友'
+                }, {
+                    'name': '查詢'
+                }, {
+                    'name': '帳號'
                 }],
                 'default': 0
             }, ensure_ascii=False))
         elif what == 'event':
             pass
+        elif what == 'geopt':
+            geoip = simplejson.loads(urlfetch.fetch(
+                'http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s&format=json' % (
+                    GEOIP_KEY, self.request.remote_addr
+                )
+            ).content)
+            self.response.out.write(simplejson.dumps({
+                'data': [
+                    geoip['latitude'], geoip['longitude']
+                ]
+            }, ensure_ascii=False))
         else:
             self.response.out.write('{}')
 
