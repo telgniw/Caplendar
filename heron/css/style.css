@@ -7,8 +7,11 @@
     padding: .5em 0;
     z-index: 100;
 }
-#t>.left, #t>.right {
+#t>.float-left, #t>.float-right {
     margin: 0 1em;
+}
+#title {
+    font-size: large;
 }
 #wrapper {
     position: fixed;
@@ -20,15 +23,15 @@
     width: 1000px;
     margin: auto;
 }
-#b>.left {
+#b>.float-left, #welcome>img {
     width: 720px;
 }
-#b>.right {
+#b>.float-right {
     width: 280px;
 }
-.left {
+.float-left {
     float: left;
 }
-.right {
+.float-right {
     float: right;
 }

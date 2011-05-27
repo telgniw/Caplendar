@@ -15,45 +15,29 @@
   {% endif %}
 </head>
 <body>
-  <script type="text/javascript">
-    $(document).ready(function() {
-      $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
-        FB.init({ apiKey: '{{ fb_api_key }}', appId: '{{ fb_app_id }}', cookie: true, status: true });
-        FB.Event.subscribe('auth.{% if current_user %}logout{% else %}login{% endif %}', window.location.reload);
-        $('.xfbml').each(function() { FB.XFBML.parse(this); });
-      });
-      $.getScript('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js', function() {
-        $('#t').addClass('ui-widget-header ui-state-active');
-        $('#b').height($(document).height()-$('#t').height());
-        $('#b>div').each(function() { $(this).height($('#b').height()); });
-        {% if current_user %}
-        $('#map').gmap({
-          position: [23.5, 121],
-          template: '{{ dialog }}',
-          css: {
-            width: $('#b>.left').width(),
-            height: $('#b>.left').height()
-          }
-        });
-        {% endif %}
-      });
-    });
-  </script>
   <div id="fb-root">
     <div id="t">
-      <div class="left"><img alt="這是標題"></div>
-      <div class="right">{% if current_user %}<span>Hi, {{ current_user.name|escape }}.</span>{% endif %}<span class="xfbml"><fb:login-button autologoutlink="true" perms="{{ perms }}"></fb:login-button></span></div>
+      <div class="float-left">
+        <span id="title"><img alt="這是標題"></span>
+      </div>
+      <div class="float-right">
+        {% if current_user %}
+        <span id="option"></span>
+        <span>Hi, {{ current_user.name|escape }}.</span>
+        {% endif %}
+        <span class="xfbml"><fb:login-button autologoutlink="true" perms="{{ perms }}"></fb:login-button></span>
+      </div>
     </div>
     <div id="wrapper">
       <div id="b">
-        <div class="left">
+        <div class="float-left">
         {% if current_user %}
           <div id="map"></div>
         {% else %}
-          <div><img src="/img/welcome.png"></div>
+          <div id="welcome"><img src="/img/welcome.png"></div>
         {% endif %}
         </div>
-        <div class="right">
+        <div class="float-right">
         {% if current_user %}
           <div id="menu"></div>
         {% else %}
@@ -63,5 +47,40 @@
       </div>
     </div>
   </div>
+  <script type="text/javascript">
+    $(document).ready(function() {
+      $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
+        FB.init({ apiKey: '{{ fb_api_key }}', appId: '{{ fb_app_id }}', cookie: true, status: true });
+        FB.Event.subscribe('auth.{% if current_user %}logout{% else %}login{% endif %}', window.location.reload);
+        $('.xfbml').each(function() { FB.XFBML.parse(this); });
+      });
+      
+      {% if current_user %}
+      $.getJSON('/qry/menu', function(res) {
+        for(i in res.data) {
+          $('#option').append($('<span></span>').text(res.data[i].name).button().height('1.5em'));
+        }
+      });
+      {% endif %}
+      
+      $.getScript('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js', function() {
+        $('#t').addClass('ui-widget-header ui-state-active');
+        $('#b').height($(document).height()-$('#t').height());
+        $('#b>div').each(function() { $(this).height($('#b').height()); });
+        
+        {% if current_user %}
+        $('#map').gmap({
+          position: [23.5, 121],
+          template: '{{ dialog }}',
+          css: {
+            width: $('#b>.float-left').width(),
+            height: $('#b>.float-left').height()
+          }
+        });
+        $('#menu').addClass('ui-widget-content').height('100%');
+        {% endif %}
+      });
+    });
+  </script>
 </body>
 </html>
