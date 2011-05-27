@@ -50,17 +50,31 @@ class QueryHandler(BaseHandler):
         if what == 'menu':
             self.response.out.write(simplejson.dumps({
                 'data': [{
-                    'name': '行程'
+                    'name': '行程',
+                    'qry': 'event'
                 }, {
-                    'name': '好友'
+                    'name': '好友',
+                    'qry': 'friend'
                 }, {
-                    'name': '查詢'
-                }, {
-                    'name': '帳號'
+                    'name': '帳號',
+                    'qry': 'account'
                 }],
                 'default': 0
             }, ensure_ascii=False))
         elif what == 'event':
+            qry = db.Query(Event).filter('owner =', self.current_user.id)
+            today, tomorrow = date.today(), date.today() + timedelta(1)
+            qry.filter('time >=', datetime(today.year, today.month, today.day))
+            qry.filter('time <', datetime(tomorrow.year, tomorrow.month, tomorrow.day))
+            events = []
+            for event in qry:
+                events.append(event)
+            self.response.out.write(simplejson.dumps({
+                'data': events
+            }, ensure_ascii=False))
+        elif what == 'friend':
+            pass
+        elif what == 'account':
             pass
         elif what == 'geopt':
             geoip = simplejson.loads(urlfetch.fetch(

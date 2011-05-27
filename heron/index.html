@@ -57,9 +57,21 @@
       
       {% if current_user %}
       $.getJSON('/qry/menu', function(res) {
+        var selected = res.default;
         for(i in res.data) {
-          $('#option').append($('<span></span>').text(res.data[i].name).button().height('1.5em'));
+          var $button = $('<span></span>').text(res.data[i].name).button().height('1.5em').val(i);
+          $button.click(function() {
+            if(selected != $(this).val()) {
+              $('#menu'+selected).hide();
+              $('#menu'+$(this).val()).fadeIn();
+              selected = $(this).val();
+            }
+          });
+          $('#option').append($button);
+          var $div = $('<div></div>').attr('id', 'menu'+i).hide().val(res.data[i].qry);
+          $('#menu').append($div);
         }
+        $('#menu'+selected).fadeIn();
       });
       {% endif %}
       

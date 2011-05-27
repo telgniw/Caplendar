@@ -1,0 +1,7 @@
+indexes:
+
+- kind: Event
+  properties:
+  - name: owner
+  - name: time
+    direction: asc
