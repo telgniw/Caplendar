@@ -1,0 +1,110 @@
+<script type="text/javascript" src="/jqry/draggalist.min.js"></script>
+<div id="new-event-dialog" title="新增">
+  <span>點選地圖上來設定地點，或者直接輸入位置。</span>
+  <label for="event-name">名稱</label>
+  <input type="text" name="event-name" id="event-name">
+  <label for="event-time">時間</label>
+  <input type="text" name="event-time" id="event-time">
+  <label for="event-place-name">地點</label>
+  <input type="text" name="place-name" id="event-event-place-name">
+  <input type="text" name="event-place" id="place" disabled="true" style="display: none;">
+  <span id="event-visibility">
+    <label for="visible">公開</label>
+    <input type="radio" name="event-visibility" id="visible" checked="checked">
+    <label for="invisible">隱藏</label>
+    <input type="radio" name="event-visibility" id="invisible">
+  </span>
+</div>
+
+{% if not events %}
+<div id="first-use-dialog" title="Hi">
+  <span>第一次使用？</span>
+</div>
+<script type="text/javascript">
+  var import_facebook = function() {
+    alert('這個功能還沒有啟用唷！');
+  }
+  var import_google = function() {
+    alert('這個功能還沒有啟用唷！');
+  }
+  $('#first-use-dialog').dialog({
+    buttons: {
+      "建立行程": function() {
+        $(this).dialog('close');
+        $('#new-event-dialog').dialog('open');
+      },
+      "匯入Facebook行程": import_facebook,
+      "匯入Google日曆": import_google
+    },
+    closeOnEscape: false,
+    draggable: false,
+    resizable: false,
+    modal: true,
+    open: function(evt, ui) {
+      $('.ui-dialog-titlebar-close', ui.dialog).hide();
+    },
+    width: '480px'
+  });
+</script>
+{% endif %}
+
+<div class="ui-widget-header" style="padding: 10px;">行程</div>
+<div class="menu-content-wrapper">
+  <div id="datepicker"></div>
+  <div id="new-event-button">新增行程</div>
+  <div id="event">
+    <div>
+      {% for event in events %}
+      <div id="{{ event.key }}">
+        <h3>{{ event.title }}</h3>
+        <span>{{ event.time }}</span>
+      </div>
+      <script type="text/javascript">
+        $('#map').mark({
+          key: '{{ event.key}}',
+          position: [{{ event.place.lat }}, {{ event.place.lon}}],
+          color: 'green',
+          prompt: marker_clicked
+        });
+      </script>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<script type="text/javascript">
+  var save_event = function() {
+    $(this).dialog('close');
+  }
+  var marker_clicked = function() {
+    alert('Not implemented!');
+  }
+  $('#datepicker').datepicker({
+    inline: true
+  });
+  $('#new-event-button').button().click(function() {
+    $('#new-event-dialog').dialog('open');
+  });
+  $('#new-event-dialog').dialog({
+    autoOpen: false,
+    buttons: {
+      '確定': save_event,
+      '取消': function() {
+        $(this).dialog('close');
+      }
+    },
+    draggable: false,
+    resizable: false,
+    modal: true
+  });
+  $('#event-time').datetimepicker({
+    dateFormat: 'yy/mm/dd',
+    timeFormat: 'h:m',
+    hourGrid: 6,
+    minuteGrid: 10
+  });
+  $('input[type="text"]').each(function() {
+    $(this).addClass('text ui-widget-content ui-corner-all');
+  });
+  $('#event-visibility').buttonset();
+</script>

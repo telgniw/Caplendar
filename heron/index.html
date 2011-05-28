@@ -1,16 +1,15 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>地圖行事曆</title>
-  <link rel="icon" href="favicon.ico">
   <link rel="stylesheet" href="/css/style.css">	
   <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="/jqry/jquery.plugins.min.js"></script>
   {% if current_user %}
   <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-  <script type="text/javascript" src="/jqry/draggalist.min.js"></script>
-  <script type="text/javascript" src="/jqry/jquery.tmpl.min.js"></script>
   <script type="text/javascript" src="/jqry/jqgmaps.min.js"></script>
   {% endif %}
 </head>
@@ -19,10 +18,12 @@
     <div id="t">
       <div class="float-left">
         <span id="title"><img alt="這是標題"></span>
+        <span class="xfbml"><fb:like href="http://www.facebook.com/apps/application.php?id=208577865834024" send="true" layout="button_count" width="450" show_faces="false" font="verdana"></fb:like></span>
       </div>
       <div class="float-right">
         {% if current_user %}
         <span id="option"></span>
+        <span><img src="http://graph.facebook.com/{{ current_user.id }}/picture" height="1.5em"></span>
         <span>Hi, {{ current_user.name|escape }}.</span>
         {% endif %}
         <span class="xfbml"><fb:login-button autologoutlink="true" perms="{{ perms }}"></fb:login-button></span>
@@ -42,6 +43,7 @@
           <div id="menu"></div>
         {% else %}
           <div class="xfbml"><fb:friendpile width="250" max_rows="1"></fb:friendpile></div>
+          <div class="xfbml"><fb:like-box href="http://www.facebook.com/apps/application.php?id=208577865834024" width="250" show_faces="false" stream="true" header="false"></fb:like-box></div>
         {% endif %}
         </div>
       </div>
@@ -55,45 +57,51 @@
         $('.xfbml').each(function() { FB.XFBML.parse(this); });
       });
       
+      $('#t').addClass('ui-widget-header ui-state-active');
+      $('#b').height($(document).height()-$('#t').height());
+      $('#b>div').each(function() { $(this).height($('#b').height()); });
+      
       {% if current_user %}
+      $.getJSON('/qry/geopt', function(res) {
+        $('#map').gmap({
+          position: res.data,
+          template: '{{ dialog }}',
+          css: {
+            width: $('#b>.float-left').width(),
+            height: $('#b>.float-left').height()
+          }
+        });
+      });
+      $('#menu').addClass('ui-widget-content').height('100%');
+      
       $.getJSON('/qry/menu', function(res) {
-        var selected = res.default;
+        var selected = -1;
         for(i in res.data) {
           var $button = $('<span></span>').text(res.data[i].name).button().height('1.5em').val(i);
           $button.click(function() {
             if(selected != $(this).val()) {
               $('#menu'+selected).hide();
-              $('#menu'+$(this).val()).fadeIn();
+              var $menu = $('#menu'+$(this).val());
+              var target = $menu.val();
+              if(target) {
+                $.get('/qry/'+target, function(res) {
+                  $menu.val('').html(res).fadeIn();
+                });
+              } else {
+                $menu.fadeIn();
+              }
               selected = $(this).val();
             }
           });
           $('#option').append($button);
+          
           var $div = $('<div></div>').attr('id', 'menu'+i).hide().val(res.data[i].qry);
           $('#menu').append($div);
+          if(i == res.default)
+            $button.trigger('click');
         }
-        $('#menu'+selected).fadeIn();
       });
       {% endif %}
-      
-      $.getScript('http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js', function() {
-        $('#t').addClass('ui-widget-header ui-state-active');
-        $('#b').height($(document).height()-$('#t').height());
-        $('#b>div').each(function() { $(this).height($('#b').height()); });
-        
-        {% if current_user %}
-        $.getJSON('/qry/geopt', function(res) {
-          $('#map').gmap({
-            position: res.data,
-            template: '{{ dialog }}',
-            css: {
-              width: $('#b>.float-left').width(),
-              height: $('#b>.float-left').height()
-            }
-          });
-        });
-        $('#menu').addClass('ui-widget-content').height('100%');
-        {% endif %}
-      });
     });
   </script>
 </body>

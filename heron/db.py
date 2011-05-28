@@ -6,7 +6,9 @@ class Event(db.Model):
     owner = db.StringProperty(required=True)
     title = db.StringProperty(required=True)
     time = db.DateTimeProperty(required=True)
-    place = db.GeoPtProperty(required=True)
+    end_time = db.DateTimeProperty()
+    place = db.GeoPtProperty()
+    place_name = db.StringProperty()
     visibility = db.StringProperty()
 
 class User(db.Model):

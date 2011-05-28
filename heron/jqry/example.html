@@ -3,9 +3,10 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 		<title>jQuery UI Example Page</title>
-		<link type="text/css" href="../css/start/jquery-ui-1.8.12.custom.css" rel="stylesheet">
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
-        <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+		<link type="text/css" href="/css/start/jquery-ui-1.8.12.custom.css" rel="stylesheet">
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/jqry/jquery.plugins.min.js"></script>
 		<script type="text/javascript">
 			$(function(){
 
@@ -41,6 +42,16 @@
 					inline: true
 				});
 				
+        // Timepicker (Plugin)
+        $('#timepicker').timepicker({
+          inline: true
+        });
+				
+        // Datetimepicker (Plugin)
+        $('#datetimepicker').datetimepicker({
+          inline: true
+        });
+        
 				// Slider
 				$('#slider').slider({
 					range: true,
@@ -69,6 +80,12 @@
 			ul#icons {margin: 0; padding: 0;}
 			ul#icons li {margin: 2px; position: relative; padding: 4px 0; cursor: pointer; float: left;  list-style: none;}
 			ul#icons span.ui-icon {float: left; margin: 0 4px;}
+      /* Datetimepicker (Plugin) */
+      .ui-timepicker-div .ui-widget-header{ margin-bottom: 8px; }
+      .ui-timepicker-div dl{ text-align: left; }
+      .ui-timepicker-div dl dt{ height: 25px; }
+      .ui-timepicker-div dl dd{ margin: -25px 0 10px 65px; }
+      .ui-timepicker-div td { font-size: 90%; }
 		</style>	
 	</head>
 	<body>
@@ -340,6 +357,14 @@
 		<!-- Datepicker -->
 		<h2 class="demoHeaders">Datepicker</h2>
 		<div id="datepicker"></div>
+	
+		<!-- Timepicker -->
+		<h2 class="demoHeaders">Timepicker</h2>
+		<div id="timepicker"></div>
+	
+		<!-- Datetimepicker -->
+		<h2 class="demoHeaders">Datetimepicker</h2>
+		<div id="datetimepicker"></div>
 	
 		<!-- Progressbar -->
 		<h2 class="demoHeaders">Progressbar</h2>	

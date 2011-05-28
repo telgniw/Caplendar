@@ -69,9 +69,10 @@ class QueryHandler(BaseHandler):
             events = []
             for event in qry:
                 events.append(event)
-            self.response.out.write(simplejson.dumps({
-                'data': events
-            }, ensure_ascii=False))
+            output = template.render('event.part.html', {
+                'events': events
+            })
+            self.response.out.write(output)
         elif what == 'friend':
             pass
         elif what == 'account':
