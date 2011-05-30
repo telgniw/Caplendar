@@ -27,9 +27,9 @@ class BaseHandler(webapp.RequestHandler):
                 if not user:
                     graph = facebook.GraphAPI(cookie['access_token'])
                     profile = graph.get_object('me')
-                    user = User(key_name=str(profile['id']),
-                                id=str(profile['id']),
-                                name=profile['name'])
+                    user = User(
+                        key_name=str(profile['id']), id=str(profile['id']), name=profile['name']
+                    )
                     user.put()
                 memcache.set(user.id, cookie['access_token'])
                 self._current_user = user
@@ -48,53 +48,102 @@ class IndexHandler(BaseHandler):
 class QueryHandler(BaseHandler):
     def get(self, what):
         if what == 'menu':
-            self.response.out.write(simplejson.dumps({
-                'data': [{
-                    'name': '行程',
-                    'qry': 'event'
-                }, {
-                    'name': '好友',
-                    'qry': 'friend'
-                }, {
-                    'name': '帳號',
-                    'qry': 'account'
-                }],
-                'default': 0
-            }, ensure_ascii=False))
+            self._get_menu_()
         elif what == 'event':
-            qry = db.Query(Event).filter('owner =', self.current_user.id)
-            today, tomorrow = date.today(), date.today() + timedelta(1)
-            qry.filter('time >=', datetime(today.year, today.month, today.day))
-            qry.filter('time <', datetime(tomorrow.year, tomorrow.month, tomorrow.day))
-            events = []
-            for event in qry:
-                events.append(event)
-            output = template.render('event.part.html', {
-                'events': events
-            })
-            self.response.out.write(output)
+            self._get_event_()
         elif what == 'friend':
-            pass
+            self._get_friend_()
         elif what == 'account':
-            pass
+            self._get_account_()
         elif what == 'geopt':
-            geoip = simplejson.loads(urlfetch.fetch(
-                'http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s&format=json' % (
-                    GEOIP_KEY, self.request.remote_addr
-                )
-            ).content)
-            self.response.out.write(simplejson.dumps({
-                'data': [
-                    geoip['latitude'], geoip['longitude']
-                ]
-            }, ensure_ascii=False))
+            self._get_geopt_()
         else:
-            self.response.out.write('{}')
+            self.response.clear()
+            self.response.set_status(404)
+    def post(self, what):
+        if what == 'event':
+            self._post_event_()
+        else:
+            self.response.clear()
+            self.response.set_status(404)
+    def _get_menu_(self):
+        self.response.out.write(simplejson.dumps({
+            'data': [{
+                'name': '行程',
+                'qry': 'event'
+            }, {
+                'name': '好友',
+                'qry': 'friend'
+            }, {
+                'name': '帳號',
+                'qry': 'account'
+            }],
+            'default': 0
+        }, ensure_ascii=False))
+    def _get_event_(self):
+        qry = db.Query(Event).filter('owner =', self.current_user.id)
+        empty = True if qry.count(limit=1) == 0 else False
+        today, tomorrow = date.today(), date.today() + timedelta(1)
+        qry.filter('time >=', datetime(today.year, today.month, today.day))
+        qry.filter('time <', datetime(tomorrow.year, tomorrow.month, tomorrow.day))
+        events = []
+        for event in qry:
+            events.append(event)
+        output = template.render('event.part.html', {
+            'events': events,
+            'events_empty': empty
+        })
+        self.response.out.write(output)
+    def _post_event_(self):
+        pass
+    def _get_friend_(self):
+        pass
+    def _get_account_(self):
+        pass
+    def _get_geopt_(self):
+        geoip = simplejson.loads(urlfetch.fetch(
+            'http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s&format=json' % (
+                GEOIP_KEY, self.request.remote_addr
+            )
+        ).content)
+        self.response.out.write(simplejson.dumps({
+            'data': [
+                geoip['latitude'], geoip['longitude']
+            ]
+        }, ensure_ascii=False))
+
+class EventHandler(BaseHandler):
+    def post(self, what):
+        if what == 'new':
+            self._post_new_()
+        elif what == 'delete':
+            self._post_delete_()
+        else:
+            self.response.clear()
+            self.response.set_status(404)
+    def _post_new_(self):
+        event = Event(
+            owner = self.current_user.id,
+            title = self.request.get('event-name'),
+            time = datetime.strptime(self.request.get('event-time'), '%Y/%m/%d %H:%M'),
+            place_name = self.request.get('event-place-name'),
+            visibility = self.request.get('event-visibility')
+        )
+        place = self.request.get('event-place')
+        if place:
+            event.place = GeoPt(place)
+        event.put()
+        self.redirect('/')
+    def _post_delete_(self):
+        key = self.request.get('key')
+        qry = db.get(key)
+        db.delete(qry)
 
 def main():
     run_wsgi_app(webapp.WSGIApplication([
         ('/', IndexHandler),
         ('/qry/(.*)', QueryHandler),
+        ('/event/(.*)', EventHandler)
     ], debug=True))
 
 if __name__ == "__main__":

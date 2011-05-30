@@ -1,31 +1,72 @@
 <script type="text/javascript" src="/jqry/draggalist.min.js"></script>
-<div id="new-event-dialog" title="新增">
-  <span>點選地圖上來設定地點，或者直接輸入位置。</span>
-  <label for="event-name">名稱</label>
-  <input type="text" name="event-name" id="event-name">
-  <label for="event-time">時間</label>
-  <input type="text" name="event-time" id="event-time">
-  <label for="event-place-name">地點</label>
-  <input type="text" name="place-name" id="event-event-place-name">
-  <input type="text" name="event-place" id="place" disabled="true" style="display: none;">
-  <span id="event-visibility">
-    <label for="visible">公開</label>
-    <input type="radio" name="event-visibility" id="visible" checked="checked">
-    <label for="invisible">隱藏</label>
-    <input type="radio" name="event-visibility" id="invisible">
-  </span>
+<script type="text/javascript">
+  var marker_clicked = function() {
+    alert('Not implemented!');
+  }
+  var insert_event = function(data) {
+  }
+  var save_event = function() {
+    $(this).dialog('close');
+  }
+</script>
+
+<div class="ui-widget-header" style="padding: 10px;">行程</div>
+<div class="menu-content-wrapper">
+  <div>
+    <span id="new-event-button">新增行程</span>
+  </div>
+  <div id="event">
+    <div>
+      {% for event in events %}
+      <div id="{{ event.key }}">
+        <h3>{{ event.title }}{% if event.place_name %} @ {{ event.place_name }}{% endif %}</h3>
+        <span>{{ event.time }}</span>
+      </div>
+      <script type="text/javascript">
+        $('#map').mark({
+          key: '{{ event.key}}',
+          position: [{{ event.place.lat }}, {{ event.place.lon}}],
+          color: 'green',
+          prompt: marker_clicked
+        });
+      </script>
+      {% endfor %}
+    </div>
+  </div>
+  <div>
+    <label for="datepicker">時間</label>
+    <input type="text" id="datepicker" name="datepicker" class="text ui-widget-content ui-corner-all">
+  </div>
 </div>
 
-{% if not events %}
+<div id="new-event-dialog" title="新增">
+  <form id="new-event-form" method="post" action="/event/new">
+    <label for="event-name">名稱</label>
+    <input type="text" name="event-name" id="event-name">
+    <label for="event-time">時間</label>
+    <input type="text" name="event-time" id="event-time">
+    <label for="event-place-name">地點</label>
+    <input type="text" name="event-place-name" id="event-place-name">
+    <input type="text" name="event-place" id="place" disabled="true" style="display: none;">
+    <span id="event-visibility">
+      <label for="visible">公開</label>
+      <input type="radio" name="event-visibility" id="visible" checked="checked" value="public">
+      <label for="invisible">隱藏</label>
+      <input type="radio" name="event-visibility" id="invisible" value="private">
+    </span>
+  </form>
+</div>
+
+{% if events_empty %}
 <div id="first-use-dialog" title="Hi">
   <span>第一次使用？</span>
 </div>
 <script type="text/javascript">
   var import_facebook = function() {
-    alert('這個功能還沒有啟用唷！');
+    alert('對不起，這個功能還沒有啟用唷>"<');
   }
   var import_google = function() {
-    alert('這個功能還沒有啟用唷！');
+    alert('對不起，這個功能還沒有啟用唷>"<');
   }
   $('#first-use-dialog').dialog({
     buttons: {
@@ -48,47 +89,17 @@
 </script>
 {% endif %}
 
-<div class="ui-widget-header" style="padding: 10px;">行程</div>
-<div class="menu-content-wrapper">
-  <div id="datepicker"></div>
-  <div id="new-event-button">新增行程</div>
-  <div id="event">
-    <div>
-      {% for event in events %}
-      <div id="{{ event.key }}">
-        <h3>{{ event.title }}</h3>
-        <span>{{ event.time }}</span>
-      </div>
-      <script type="text/javascript">
-        $('#map').mark({
-          key: '{{ event.key}}',
-          position: [{{ event.place.lat }}, {{ event.place.lon}}],
-          color: 'green',
-          prompt: marker_clicked
-        });
-      </script>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-
 <script type="text/javascript">
-  var save_event = function() {
-    $(this).dialog('close');
-  }
-  var marker_clicked = function() {
-    alert('Not implemented!');
-  }
-  $('#datepicker').datepicker({
-    inline: true
-  });
+  $('#datepicker').datepicker();
   $('#new-event-button').button().click(function() {
     $('#new-event-dialog').dialog('open');
   });
   $('#new-event-dialog').dialog({
     autoOpen: false,
     buttons: {
-      '確定': save_event,
+      '確定': function() {
+        $('#new-event-form').trigger('submit');
+      },
       '取消': function() {
         $(this).dialog('close');
       }
@@ -97,14 +108,35 @@
     resizable: false,
     modal: true
   });
+  $('input[type="text"]').each(function() {
+    $(this).addClass('text ui-widget-content ui-corner-all');
+  });
   $('#event-time').datetimepicker({
     dateFormat: 'yy/mm/dd',
     timeFormat: 'h:m',
     hourGrid: 6,
     minuteGrid: 10
   });
-  $('input[type="text"]').each(function() {
-    $(this).addClass('text ui-widget-content ui-corner-all');
-  });
   $('#event-visibility').buttonset();
+  $('#new-event-form').submit(function() {
+    // check form
+  });
+  $('#event').draggalist({
+    css: {
+      width: '240px',
+      height: '360px'
+    },
+    args: {
+      onDelete: function() {
+        var $this = $(this);
+        $.ajax({
+          url: '/event/delete',
+          type: 'POST',
+          data: { key: $this.attr('id') },
+          success: function() { $this.detach(); },
+          error: function() { alert('刪除失敗了，請稍候再試！'); }
+        });
+      }
+    }
+  });
 </script>
