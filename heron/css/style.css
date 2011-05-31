@@ -29,7 +29,7 @@
     margin: 1em auto;
 }
 .ui-dialog { font-size: small !important; }
-.ui-dialog-content>form>label, .ui-dialog-content>form>span {
+.ui-dialog-content>form>label, .ui-dialog-content>form>span, .ui-dialog-content>div>span {
     display: block;
     margin: .5em 0 0 0;
 }

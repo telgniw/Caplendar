@@ -4,8 +4,8 @@ from google.appengine.ext import db
 
 class Event(db.Model):
     owner = db.StringProperty(required=True)
-    title = db.StringProperty(required=True)
-    time = db.DateTimeProperty(required=True)
+    title = db.StringProperty()
+    time = db.DateTimeProperty()
     end_time = db.DateTimeProperty()
     place = db.GeoPtProperty()
     place_name = db.StringProperty()

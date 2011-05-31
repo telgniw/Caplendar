@@ -6,7 +6,7 @@ FB_APP_ID     = '208577865834024'
 FB_APP_SECRET = 'ba90c5d51930b3bfc651d0a1d6819884'
 PERMS = 'user_events,create_event,rsvp_event,read_friendlists,manage_friendlists,publish_stream'
 
-import facebook
+import facebook, logging
 from db import *
 from datetime import *
 from django.utils import simplejson
@@ -101,11 +101,17 @@ class QueryHandler(BaseHandler):
     def _get_account_(self):
         pass
     def _get_geopt_(self):
-        geoip = simplejson.loads(urlfetch.fetch(
-            'http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s&format=json' % (
-                GEOIP_KEY, self.request.remote_addr
-            )
-        ).content)
+        try:
+            geoip = simplejson.loads(urlfetch.fetch(
+                'http://api.ipinfodb.com/v3/ip-city/?key=%s&ip=%s&format=json' % (
+                    GEOIP_KEY, self.request.remote_addr
+                )
+            ).content)
+        except urlfetch.DownloadError:
+            geoip = {
+                'latitude': 23.5,
+                'longitude': 121.5
+            }
         self.response.out.write(simplejson.dumps({
             'data': [
                 geoip['latitude'], geoip['longitude']
@@ -114,24 +120,32 @@ class QueryHandler(BaseHandler):
 
 class EventHandler(BaseHandler):
     def post(self, what):
-        if what == 'new':
-            self._post_new_()
+        if what == 'edit':
+            self._post_edit_()
         elif what == 'delete':
             self._post_delete_()
         else:
             self.response.clear()
             self.response.set_status(404)
-    def _post_new_(self):
-        event = Event(
-            owner = self.current_user.id,
-            title = self.request.get('event-name'),
-            time = datetime.strptime(self.request.get('event-time'), '%Y/%m/%d %H:%M'),
-            place_name = self.request.get('event-place-name'),
-            visibility = self.request.get('event-visibility')
+    def _post_edit_(self):
+        logging.info(self.request.arguments())
+        key = self.request.get('key')
+        name, time, place, place_name, visibility = (
+            self.request.get('name'),
+            datetime.strptime(self.request.get('time'), '%Y/%m/%d %H:%M'),
+            self.request.get('place'),
+            self.request.get('place-name'),
+            self.request.get('visibility')
         )
-        place = self.request.get('event-place')
-        if place:
-            event.place = GeoPt(place)
+        event = db.get(key) if key else Event(owner = self.current_user.id)
+        event.title, event.time, event.place_name, event.visibility = (
+            name, time, place_name, visibility
+        )
+        try:
+            if place:
+                event.place = GeoPt(place)
+        except db.BadValueError:
+            pass
         event.put()
         self.redirect('/')
     def _post_delete_(self):

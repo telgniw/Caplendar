@@ -5,12 +5,12 @@
   <title>地圖行事曆</title>
   <link rel="stylesheet" href="/css/style.css">	
   <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
-  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
   <script type="text/javascript" src="/jqry/jquery.plugins.min.js"></script>
   {% if current_user %}
   <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
-  <script type="text/javascript" src="/jqry/jqgmaps.min.js"></script>
+  <script type="text/javascript" src="/jqry/jqgmaps.js"></script>
   {% endif %}
 </head>
 <body>
@@ -70,7 +70,7 @@
             width: $('#b>.float-left').width(),
             height: $('#b>.float-left').height()
           },
-          zoom: 10
+          zoom: 12
         });
       });
       $('#menu').addClass('ui-widget-content').height('100%');
