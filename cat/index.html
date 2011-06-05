@@ -67,7 +67,10 @@
     </div>
   </div>
   {% if current_user %}
-  <div id="first-use-dialog" title="Hi!"><span>還沒有建立行程?</span></div>
+  <div id="first-use-dialog" title="Hi!">
+    <span>還沒有建立行程嗎?</span>
+    <span>可以直接在地圖上點選行程位置，或者點選右下方的按鈕來新增行程喔!</span>
+  </div>
   <div id="event-dialog">
     <form>
       <input type="text" name="event-key" id="event-key" class="hide">
@@ -87,26 +90,32 @@
     </form>
   </div>
   <div id="view-event-dialog" title="檢視行程"></div>
+  <div id="message-dialog" title="訊息">
+    <span class="ui-icon ui-icon-info" style="float:left;"></span>
+    <span class="message" style="margin-left: 10px;"></span>
+  </div>
+  <div id="delete-confirm-dialog" title="確認">
+    <span class="ui-icon ui-icon-alert" style="float:left;"></span>
+    <span class="message" style="margin-left: 10px;">確定要刪除嗎?</span>
+  </div>
   {% endif %}
   <script type="text/javascript">
     var title_place = function(title, place_name) { return title + (place_name? ' @ ' + place_name : ''); };
     var clear_form = function($form, radio_value) {
-      $('input:text', $form).each(function() { $(this).val(''); });
+      $('input:not(:radio)', $form).each(function() { $(this).val(''); });
       if(radio_value)
         $('input:radio', $form).val([radio_value]);
+      $('#event-visibility').buttonset('refresh');
     };
     var pack_form = function($form) {
       var valid = true, res = {};
-      $('input:text', $form).each(function() {
+      $('input:not(:radio)', $form).each(function() {
         if($(this).hasClass('required') && !$(this).val())
           valid = false;
         else
           res[$(this).attr('name')] = $(this).val();
       });
-      $('input:radio', $form).each(function() {
-        if($(this).attr('checked'))
-          res[$(this).attr('name')] = $(this).val();
-      });
+      res[$('input:radio', $form).attr('name')] = $('input:radio:checked', $form).val();
       return valid? res : false;
     };
     var prompt_first_use = function() { $('#first-use-dialog').dialog('open'); };
@@ -115,14 +124,39 @@
       $('#event-place').val(pos);
       $('#event-dialog').dialog('option', 'title', '新增行程').dialog('open');
     };
+    var prompt_share_event = function(id) {
+      var info = $('#'+id).data('info');
+      FB.api('/me/events', 'POST', {
+        name: info.name,
+        start_time: info.time,
+        end_time: info.time,
+        location: (info.place? info.place : info.place_name),
+        privacy: (info.visibility == 'public'? 'OPEN' : 'SECRET')
+      }, function(res) {
+        $.ajax({
+          url: '/event/share',
+          type: 'POST',
+          data: { key: id, 'fb-event-id': res.id },
+          dataType: json,
+          success: function() {
+          },
+          error: function() {
+          }
+        });
+      });
+    };
     var prompt_edit_event = function(id) {
       var info = $('#'+id).data('info'), $form = $('#event-dialog>form');
       clear_form($form, info['visibility']);
-      $('input:text', $form).each(function() {
+      $('input:not(:radio)', $form).each(function() {
         $(this).val(info[$(this).attr('name').replace(/^event-/, '')]);
       });
       $('#event-key').val(id);
       $('#event-dialog').dialog('option', 'title', '編輯行程').dialog('open');
+    };
+    var prompt_message = function(msg) {
+      $('#message-dialog>.message').text(msg);
+      $('#message-dialog').dialog('open');
     };
     var prompt_view_event = function(id) {
       var info = $('#'+id).data('info'), $content = $('<div></div>');
@@ -157,8 +191,9 @@
               var $title = $('<h3></h3>').text(title_place(event.title, event.place_name));
               var $content = $('<span></span>').text(event.time);
               $div.append($('<div></div>').attr('id', event.key).click(function() {
-                if(event.place)
-                  $('#map').gmap('center', $(this).data('info'));
+                var info = $(this).data('info');
+                if(info.place)
+                  $('#map').gmap('center', info);
                 prompt_view_event($(this).attr('id'));
               }).hover(function() {
                 $(this).css('cursor', 'pointer');
@@ -182,20 +217,32 @@
             }
           }).fadeIn();
         },
-        error: function() { alert('現在無法取得行程，請稍候再試>"<'); }
+        error: function() { prompt_message('現在無法取得行程，請稍候再試>"<'); }
       });
     };
     var delete_event_by_key = function(id) {
-      $.ajax({
-        url: '/event/delete',
-        type: 'POST',
-        data: { key: id },
-        dataType: 'json',
-        success: function(res) {
-          $('#'+id).detach();
-          $('#map').unmark({ key: id });
+      $('#delete-confirm-dialog').dialog({
+        autoOpen: true,
+        buttons: {
+          '確定': function() {
+            $.ajax({
+              url: '/event/delete',
+              type: 'POST',
+              data: { key: id },
+              dataType: 'json',
+              success: function(res) {
+                $('#'+id).detach();
+                $('#map').unmark({ key: id });
+              },
+              error: function() { prompt_message('刪除失敗了>"<'); }
+            });
+            $(this).dialog('destroy');
+          },
+          '取消': function() { $(this).dialog('destroy'); }
         },
-        error: function() { alert('刪除失敗了>"<'); }
+        draggable: false,
+        resizable: false,
+        modal: true
       });
     };
     $(function(){
@@ -231,24 +278,21 @@
       });
       
       $('#datepicker').datepicker({
-        dateFormat: 'yy/mm/dd',
+        dateFormat: 'yy-mm-dd',
         onClose: get_event_by_date
       }).datepicker('setDate', new Date());
-      $('#new-event-button').button().click(prompt_new_event);
+      $('#new-event-button').button().click(function() { prompt_new_event(); });
       
       $('#first-use-dialog').dialog({
         autoOpen: false,
         buttons: {
-          '建立行程': function() {
-            $(this).dialog('close');
-            prompt_new_event();
-          },
           '匯入Facebook行程': function() {
-            alert('對不起，這個功能尚未完工>"<');
+            prompt_message('對不起，這個功能尚未完工>"<');
           },
           '匯入Google日曆': function() {
-            alert('對不起，這個功能尚未完工>"<');
-          }
+            prompt_message('對不起，這個功能尚未完工>"<');
+          },
+          '關閉': function() { $(this).dialog('close'); }
         },
         draggable: false,
         resizable: false,
@@ -271,7 +315,7 @@
                 success: function(res) {
                   get_event_by_date();
                 },
-                error: function() { alert('失敗了，請稍候再試>"<'); }
+                error: function() { prompt_message('失敗了，請稍候再試>"<'); }
               });
             }
           },
@@ -286,7 +330,7 @@
       });
       $('#event-visibility').buttonset();
       $('#event-time').datetimepicker({
-        dateFormat: 'yy/mm/dd',
+        dateFormat: 'yy-mm-dd',
         timeFormat: 'h:m',
         hourGrid: 6,
         minuteGrid: 10
@@ -294,17 +338,28 @@
       $('#view-event-dialog').dialog({
         autoOpen: false,
         buttons: {
-          '關閉': function() {
+          '分享': function() {
             $(this).dialog('close');
+            prompt_share_event($(this).val());
+          },
+          '編輯': function() {
+            $(this).dialog('close');
+            prompt_edit_event($(this).val());
           },
           '刪除': function() {
             $(this).dialog('close');
             delete_event_by_key($(this).val());
           },
-          '編輯': function() {
-            $(this).dialog('close');
-            prompt_edit_event($(this).val());
-          }
+          '關閉': function() { $(this).dialog('close'); }
+        },
+        draggable: false,
+        resizable: false,
+        modal: true
+      });
+      $('#message-dialog').dialog({
+        autoOpen: false,
+        buttons: {
+          '關閉': function() { $(this).dialog('close'); }
         },
         draggable: false,
         resizable: false,

@@ -21,7 +21,7 @@ class EventHandler(BaseHandler):
         qry = db.Query(Event).filter('owner =', self.current_user.id)
         empty, events = (qry.count(limit=1) == 0), []
         if not empty:
-            today = datetime.strptime(self.request.get('time'), '%Y/%m/%d')
+            today = datetime.strptime(self.request.get('time'), '%Y-%m-%d')
             tomorrow = today + timedelta(1)
             qry.filter('time >=', today).filter('time <', tomorrow)
             for event in qry:
@@ -38,6 +38,8 @@ class EventHandler(BaseHandler):
             self._post_new_or_edit_()
         elif what == 'delete':
             self._post_delete_()
+        elif what == 'share':
+            self._post_share_()
         else:
             self.response.clear()
             self.response.set_status(404)
@@ -47,7 +49,7 @@ class EventHandler(BaseHandler):
         try:
             event.title, event.time, event.place_name, event.visibility = (
                 self.request.get('event-name'),
-                datetime.strptime(self.request.get('event-time'), '%Y/%m/%d %H:%M'),
+                datetime.strptime(self.request.get('event-time'), '%Y-%m-%d %H:%M'),
                 self.request.get('event-place-name'),
                 self.request.get('event-visibility')
             )
@@ -70,6 +72,16 @@ class EventHandler(BaseHandler):
         key = self.request.get('key')
         qry = db.get(key)
         db.delete(qry)
+        self.response.out.write(simplejson.dumps({
+            'data': {
+                'key': key
+            }
+        }, ensure_ascii=False))
+    def _post_share_(self):
+        key = self.request.get('key')
+        event = db.get(key)
+        event.fb_event_id = self.request.get('fb-event-id')
+        event.put()
         self.response.out.write(simplejson.dumps({
             'data': {
                 'key': key

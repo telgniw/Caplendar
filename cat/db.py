@@ -11,7 +11,7 @@ def to_dict(model):
         if val is None:
             continue
         elif isinstance(val, datetime):
-            dic[key] = val.strftime('%Y/%m/%d %H:%M')
+            dic[key] = val.strftime('%Y-%m-%d %H:%M')
         elif isinstance(val, GeoPt):
             dic[key] = {'latitude': val.lat, 'longitude': val.lon}
         else:
@@ -30,6 +30,7 @@ class Event(BaseModel):
     place = db.GeoPtProperty()
     place_name = db.StringProperty()
     visibility = db.StringProperty()
+    fb_event_id = db.StringProperty()
 
 class User(BaseModel):
     id = db.StringProperty(required=True)

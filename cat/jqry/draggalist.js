@@ -101,6 +101,10 @@
                     $(this).css({
                         display: 'block',
                         padding: '5px'
+                    }).hover(function() {
+                      $(this).addClass('ui-state-hover');
+                    }, function() {
+                      $(this).removeClass('ui-state-hover')
                     }).addClass('ui-priority-secondary ui-state-default ui-corner-all');
                 });
             });

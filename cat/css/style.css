@@ -8,6 +8,7 @@
     z-index: 100;
 }
 #t>.float-left, #t>.float-right { margin: 0 1em; }
+#t>.float-left>span { vertical-align: top; }
 #title { font-size: large; }
 #wrapper {
     position: fixed;
