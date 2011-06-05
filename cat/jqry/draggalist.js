@@ -31,16 +31,16 @@
             var target = this;
             var close = $('<span></span>').css('float', 'right').click(function() {
                 var buttons = [{
-                        text: args.textCancel,
-                        click: function() {
-                            $(this).dialog('close');
-                            args.onCancel.call(target);
-                        }
-                    }, {
                         text: args.textDelete,
                         click: function() {
                             $(this).dialog('close');
                             args.onDelete.call(target);
+                        }
+                    }, {
+                        text: args.textCancel,
+                        click: function() {
+                            $(this).dialog('close');
+                            args.onCancel.call(target);
                         }
                     }
                 ];
@@ -70,12 +70,10 @@
     $.fn.draggalist = function(options) {
         /** css:        {}              <optional>
             type:       tag name        <optional>
-            args:       for deletable   <optional>
         **/
         var args = {
             css: {},
-            type: 'div',
-            args: {}
+            type: 'div'
         };
         return this.each(function() {
             if(options)
@@ -103,7 +101,7 @@
                     $(this).css({
                         display: 'block',
                         padding: '5px'
-                    }).addClass('ui-priority-secondary ui-state-default ui-corner-all').deletable(args.args);
+                    }).addClass('ui-priority-secondary ui-state-default ui-corner-all');
                 });
             });
         });

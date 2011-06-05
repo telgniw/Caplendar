@@ -1,5 +1,5 @@
 application: date-map
-version: heron
+version: cat
 runtime: python
 api_version: 1
 
@@ -11,7 +11,7 @@ handlers:
 - url: /jqry
   static_dir: jqry
 - url: /(.*)\.ico
-  static_files: /\1\.ico
+  static_files: /\1.ico
   upload: (.*)\.ico
 - url: /.*
   script: main.py

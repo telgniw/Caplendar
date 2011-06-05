@@ -6,7 +6,7 @@
         return 'http://www.google.com/mapfiles/ms/micons/' + color + '.png';
     }
     var default_position = latlng([23.5, 121]);
-    $.fn.gmap = function(options) {
+    $.fn.gmap = function(options, others) {
         /** position:   [lat, lng]      <required>
             template:   template        <required>
             css:        css map         <optional>
@@ -17,6 +17,14 @@
             zoom: 7
         };
         return this.each(function() {
+            switch(options) {
+                case 'center':
+                    if(others.place) {
+                        var map = $(this).data('map');
+                        map.setCenter(latlng(others.place));
+                    }
+                    return;
+            }
             if(options)
                 $.extend(args, options);
             var target = this;
@@ -61,7 +69,7 @@
                 if(marker)
                     marker.setMap(null);
                 var pos = args.info.place;
-                if($.type(args.info.place) == 'array')
+                if($.type(pos) == 'array')
                     pos = latlng(args.info.place);
                 marker = new google.maps.Marker({
                     map: map,
@@ -74,7 +82,6 @@
                   args.onClick.call(target, args.key);
                 });
                 markers[args.key] = marker;
-                $(marker).data('info', args.info);
             }
         });
     };
@@ -94,23 +101,5 @@
                     marker.setMap(null);
             }
         });
-    };
-    $.fn.get_info = function(key) {
-        var markers = $(this[0]).data('markers');
-        return $(markers[key]).data('info');
-    };
-    $.fn.set_info = function(key, type) {
-        var target = this[0];
-        var markers = $(target).data('markers');
-        var info = $(markers[key]).data('info');
-        if(info) {
-            switch(type) {
-                case 'center':
-                    var map = $(target).data('map');
-                    map.setCenter(latlng(info.place));
-                    break;
-            }
-        }
-        return this;
     };
 })(jQuery);

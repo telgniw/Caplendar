@@ -19,14 +19,27 @@
     width: 1000px;
     margin: auto;
 }
-#b>.float-left, #welcome>img { width: 720px; }
+#b>.float-left { width: 720px; }
 #b>.float-right { width: 280px; }
-#b>.float-right>.xfbml { margin: 1em 0; }
+#welcome { text-align: center; }
+#welcome>span {
+    margin: 10px 0;
+    display: block;
+}
+#welcome>span>img { max-width: 720px; }
+#menu { width: 100%; }
 .float-left { float: left; }
 .float-right { float: right; }
-.menu-content-wrapper>div {
+#menu-title { padding: 10px; }
+#menu-content>div {
     width: 240px;
-    margin: 1em auto;
+    margin: 0 auto;
+}
+.menu, .hide { display: none; }
+.menu>div { margin: 1em auto; }
+#event-list {
+    width: 240px;
+    height: 360px;
 }
 .ui-dialog { font-size: small !important; }
 .ui-dialog-content>form>label, .ui-dialog-content>form>span, .ui-dialog-content>div>span {
