@@ -60,29 +60,29 @@
             onClick: function() {}
         };
         return this.each(function() {
+            var map = $(this).data('map');
+            if(!map)
+                return;
+            var markers = $(this).data('markers');
             if(options)
                 $.extend(args, options);
-            var map = $(this).data('map');
-            if(map) {
-                var markers = $(this).data('markers');
-                var marker = markers[args.key];
-                if(marker)
-                    marker.setMap(null);
-                var pos = args.info.place;
-                if($.type(pos) == 'array')
-                    pos = latlng(args.info.place);
-                marker = new google.maps.Marker({
-                    map: map,
-                    position: pos,
-                    title: args.info.name,
-                    icon: image(args.color)
-                });
-                var target = this;
-                google.maps.event.addListener(marker, 'click', function() {
-                  args.onClick.call(target, args.key);
-                });
-                markers[args.key] = marker;
-            }
+            var marker = markers[args.key];
+            if(marker)
+                marker.setMap(null);
+            var pos = args.info.place;
+            if($.type(pos) == 'array')
+                pos = latlng(args.info.place);
+            marker = new google.maps.Marker({
+                map: map,
+                position: pos,
+                title: args.info.name,
+                icon: image(args.color)
+            });
+            var target = this;
+            google.maps.event.addListener(marker, 'click', function() {
+              args.onClick.call(target, args.key);
+            });
+            markers[args.key] = marker;
         });
     };
     $.fn.unmark = function(options) {
@@ -91,15 +91,21 @@
         var args = {
         };
         return this.each(function() {
+            var map = $(this).data('map');
+            if(!map)
+                return;
+            var markers = $(this).data('markers');
+            switch(options) {
+                case 'all':
+                    for(i in markers)
+                      markers[i].setMap(null);
+                    return;
+            }
             if(options)
                 $.extend(args, options);
-            var map = $(this).data('map');
-            if(map) {
-                var markers = $(this).data('markers');
-                var marker = markers[args.key];
-                if(marker)
-                    marker.setMap(null);
-            }
+            var marker = markers[args.key];
+            if(marker)
+                marker.setMap(null);
         });
     };
 })(jQuery);

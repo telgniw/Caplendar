@@ -3,5 +3,12 @@ indexes:
 - kind: Event
   properties:
   - name: owner
+  - name: visibility
+  - name: time
+    direction: asc
+
+- kind: Event
+  properties:
+  - name: owner
   - name: time
     direction: asc

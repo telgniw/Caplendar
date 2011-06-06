@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf8 -*-
 
+from common import *
 from db import *
 from base import *
 from event import *
@@ -18,7 +19,7 @@ class IndexHandler(BaseHandler):
             'fb_api_key': FB_API_KEY,
             'fb_app_id': FB_APP_ID,
             'perms': PERMS,
-            'app_title': '地圖行事曆',
+            'app_title': APP_TITLE,
             'access_token': access_token
         })
         self.response.out.write(output)

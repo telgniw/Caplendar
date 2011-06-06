@@ -18,7 +18,11 @@ class EventHandler(BaseHandler):
             self.response.clear()
             self.response.set_status(404)
     def _get_list_(self):
-        qry = db.Query(Event).filter('owner =', self.current_user.id)
+        id = self.request.get('id')
+        if id:
+            qry = db.Query(Event).filter('owner =', id).filter('visibility', 'public')
+        else:
+            qry = db.Query(Event).filter('owner =', self.current_user.id)
         empty, events = (qry.count(limit=1) == 0), []
         if not empty:
             today = datetime.strptime(self.request.get('time'), '%Y-%m-%d')

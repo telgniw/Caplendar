@@ -5,7 +5,7 @@
   <title>{{ app_title }}</title>
   <link rel="icon" href="/img/logo.png">
   <link rel="stylesheet" href="/css/style.css">	
-  <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
+  <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
   <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
@@ -219,6 +219,7 @@
         date = $('#datepicker').val();
       var $container = $('<div></div>').hide();
       $('#event-list').empty().append($container);
+      $('#map').unmark('all');
       $.ajax({
         url: '/event/list',
         type: 'GET',
@@ -286,7 +287,45 @@
             var $photo = $('<img>').attr('src', 'http://graph.facebook.com/'+friend.id+'/picture').css({
               'float': 'right'
             });
-            $div.append($('<div></div>').attr('id', friend.id).append($photo).append($name).height('50px'));
+            $div.append($('<div></div>').attr('id', friend.id).height('50px').click(function() {
+              if($(this).hasClass('ui-state-active')) {
+                var markers = $(this).data('markers');
+                for(i in markers)
+                  $('#map').unmark({ key: markers[i] });
+                $(this).removeClass('ui-state-active');
+              } else {
+                var markers = [], target = this;
+                $.ajax({
+                  url: '/event/list',
+                  type: 'GET',
+                  data: { time: $('#datepicker').val(), id: $(this).attr('id') },
+                  dataType: 'json',
+                  success: function(res) {
+                    if(res.empty)
+                      prompt_message('這個朋友沒有行程耶>"<');
+                    else {
+                      for(i=0; i<res.data.num; i++) {
+                        var event = res.data.events[i], info = {
+                          'name': event.title,
+                          'place': event.place? [event.place.latitude, event.place.longitude] : false,
+                        };
+                        if(event.place) {
+                          $('#map').mark({
+                            key: event.key,
+                            info: info,
+                            color: 'green',
+                            onClick: function() {}
+                          });
+                          markers.push(event.key);
+                        }
+                      }
+                      $(target).data('markers', markers);
+                    }
+                  }
+                });
+                $(this).addClass('ui-state-active');
+              }
+            }).hover(function() { $(this).css('cursor', 'pointer'); }).append($photo).append($name));
           }
           $container.append($div).draggalist({
             css: {
