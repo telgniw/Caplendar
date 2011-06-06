@@ -26,6 +26,6 @@ class BaseHandler(webapp.RequestHandler):
                         key_name=str(profile['id']), id=str(profile['id']), name=profile['name']
                     )
                     user.put()
-                memcache.set(user.id, cookie['access_token'])
+                memcache.set(user.id, cookie['access_token'], time=86400)
                 self._current_user = user
         return self._current_user

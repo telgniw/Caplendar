@@ -32,7 +32,7 @@ class EventHandler(BaseHandler):
                 'num': len(events),
                 'events': events
             }
-        }))
+        }, ensure_ascii=False))
     def post(self, what):
         if what == 'new_or_edit':
             self._post_new_or_edit_()
@@ -70,8 +70,8 @@ class EventHandler(BaseHandler):
             }, ensure_ascii=False))
     def _post_delete_(self):
         key = self.request.get('key')
-        qry = db.get(key)
-        db.delete(qry)
+        event = db.get(key)
+        db.delete(event)
         self.response.out.write(simplejson.dumps({
             'data': {
                 'key': key

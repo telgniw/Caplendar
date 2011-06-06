@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-  <title>地圖行事曆</title>
+  <title>{{ app_title }}</title>
   <link rel="icon" href="/img/logo.png">
   <link rel="stylesheet" href="/css/style.css">	
   <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
@@ -17,7 +17,7 @@
   <div id="fb-root">
     <div id="t" class="ui-widget-header ui-state-active">
       <div class="float-left">
-        <span id="title"><img src="/img/title.png" alt="地圖行事曆"></span>
+        <span id="title"><img src="/img/title.png" alt="{{ app_title }}"></span>
         <span class="xfbml"><fb:like href="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}" send="true" layout="button_count" width="450" show_faces="false" font="verdana"></fb:like></span>
       </div>
       <div class="float-right">
@@ -50,7 +50,7 @@
               <div><span id="new-event-button" class="button">新增行程</span></div>
             </div>
             <div id="friend" class="menu">
-              <!-- TODO -->
+              <div id="friend-list"></div>
             </div>
             <div id="account" class="menu">
               <!-- TODO -->
@@ -94,15 +94,17 @@
     <span class="ui-icon ui-icon-info" style="float:left;"></span>
     <span class="message" style="margin-left: 10px;"></span>
   </div>
-  <div id="delete-confirm-dialog" title="確認">
+  <div id="confirm-dialog" title="確認">
     <span class="ui-icon ui-icon-alert" style="float:left;"></span>
-    <span class="message" style="margin-left: 10px;">確定要刪除嗎?</span>
+    <span class="message" style="margin-left: 10px;"></span>
   </div>
   {% endif %}
   <script type="text/javascript">
     var title_place = function(title, place_name) { return title + (place_name? ' @ ' + place_name : ''); };
     var clear_form = function($form, radio_value) {
-      $('input:not(:radio)', $form).each(function() { $(this).val(''); });
+      $('input:not(:radio)', $form).each(function() {
+        $(this).val('').removeClass('ui-state-error');
+      });
       if(radio_value)
         $('input:radio', $form).val([radio_value]);
       $('#event-visibility').buttonset('refresh');
@@ -110,8 +112,10 @@
     var pack_form = function($form) {
       var valid = true, res = {};
       $('input:not(:radio)', $form).each(function() {
-        if($(this).hasClass('required') && !$(this).val())
+        if($(this).hasClass('required') && !$(this).val()) {
           valid = false;
+          $(this).addClass('ui-state-error');
+        }
         else
           res[$(this).attr('name')] = $(this).val();
       });
@@ -125,25 +129,52 @@
       $('#event-dialog').dialog('option', 'title', '新增行程').dialog('open');
     };
     var prompt_share_event = function(id) {
-      var info = $('#'+id).data('info');
-      FB.api('/me/events', 'POST', {
-        name: info.name,
-        start_time: info.time,
-        end_time: info.time,
-        location: (info.place? info.place : info.place_name),
-        privacy: (info.visibility == 'public'? 'OPEN' : 'SECRET')
-      }, function(res) {
-        $.ajax({
-          url: '/event/share',
-          type: 'POST',
-          data: { key: id, 'fb-event-id': res.id },
-          dataType: json,
-          success: function() {
-          },
-          error: function() {
-          }
+      var post_to_wall = function(info) {
+        var url = 'http://www.facebook.com/event.php?eid='+info['fb-event-id'];
+        FB.api('/me/feed', 'POST', {
+          app_id: '{{ fb_app_id }}',
+          picture: 'http://date-map.appspot.com/img/big-logo.png',
+          link: 'http://date-map.appspot.com/',
+          name: '{{ app_title }}',
+          description: '加入{{ app_title }}看我的其它行程!',
+          properties: '{"{{ app_title }}":"http://date-map.appspot.com/"}'
+        }, function(res) {
+          prompt_message('行程已經分享在Facebook上囉!',
+            $('<a></a>').attr('href', url).attr('target', '_blank').text('按此前往').css({
+              'float': 'right', 'right': '0'
+            }).button());
         });
-      });
+      };
+      var info = $('#'+id).data('info');
+      if(info['fb-event-id'])
+        post_to_wall(info);
+      else {
+        var share_event = function() {
+          var venue = (info['place']? { latitude: info['place'].latitude, longitude: info['place'].longitude } : {});
+          FB.api('/me/events', 'POST', {
+            name: info['name'],
+            start_time: info['time'],
+            end_time: info['time'],
+            location: info['place-name'],
+            venue: venue,
+            privacy: 'SECRET'
+          }, function(res) {
+            info['fb-event-id'] = res.id;
+            $('#'+id).data('info', info);
+            $.ajax({
+              url: '/event/share',
+              type: 'POST',
+              data: { key: id, 'fb-event-id': res.id },
+              dataType: 'json'
+            });
+            post_to_wall(info);
+          });
+        };
+        if(info['visibility'] != 'public')
+          prompt_confirm('這個行程被設為不公開，確定要分享嗎?', share_event);
+        else
+          share_event();
+      }
     };
     var prompt_edit_event = function(id) {
       var info = $('#'+id).data('info'), $form = $('#event-dialog>form');
@@ -154,9 +185,27 @@
       $('#event-key').val(id);
       $('#event-dialog').dialog('option', 'title', '編輯行程').dialog('open');
     };
-    var prompt_message = function(msg) {
+    var prompt_message = function(msg, obj) {
       $('#message-dialog>.message').text(msg);
+      if(obj)
+        $('#message-dialog>.message').append(obj);
       $('#message-dialog').dialog('open');
+    };
+    var prompt_confirm = function(msg, func) {
+      $('#confirm-dialog>.message').text(msg);
+      $('#confirm-dialog').dialog({
+        autoOpen: true,
+        buttons: {
+          '確定': function() {
+            func();
+            $(this).dialog('destroy');
+          },
+          '取消': function() { $(this).dialog('destroy'); }
+        },
+        draggable: false,
+        resizable: false,
+        modal: true
+      });
     };
     var prompt_view_event = function(id) {
       var info = $('#'+id).data('info'), $content = $('<div></div>');
@@ -186,14 +235,16 @@
                 'time': event.time,
                 'place': event.place? [event.place.latitude, event.place.longitude] : false,
                 'place-name': event.place_name,
-                'visibility': event.visibility
+                'visibility': event.visibility,
+                'fb-event-id': event.fb_event_id
               };
               var $title = $('<h3></h3>').text(title_place(event.title, event.place_name));
               var $content = $('<span></span>').text(event.time);
               $div.append($('<div></div>').attr('id', event.key).click(function() {
                 var info = $(this).data('info');
-                if(info.place)
+                if(info['place'])
                   $('#map').gmap('center', info);
+              }).dblclick(function() {
                 prompt_view_event($(this).attr('id'));
               }).hover(function() {
                 $(this).css('cursor', 'pointer');
@@ -220,30 +271,48 @@
         error: function() { prompt_message('現在無法取得行程，請稍候再試>"<'); }
       });
     };
-    var delete_event_by_key = function(id) {
-      $('#delete-confirm-dialog').dialog({
-        autoOpen: true,
-        buttons: {
-          '確定': function() {
-            $.ajax({
-              url: '/event/delete',
-              type: 'POST',
-              data: { key: id },
-              dataType: 'json',
-              success: function(res) {
-                $('#'+id).detach();
-                $('#map').unmark({ key: id });
-              },
-              error: function() { prompt_message('刪除失敗了>"<'); }
+    var get_friend = function() {
+      var $container = $('<div></div>').hide();
+      $('#friend-list').empty().append($container);
+      $.ajax({
+        url: '/qry/friend',
+        type: 'GET',
+        dataType: 'json',
+        success: function(res) {
+          var $div = $('<div></div>');
+          for(i=0; i<res.data.num; i++) {
+            var friend = res.data.friends[i];
+            var $name = $('<h3></h3>').text(friend.name);
+            var $photo = $('<img>').attr('src', 'http://graph.facebook.com/'+friend.id+'/picture').css({
+              'float': 'right'
             });
-            $(this).dialog('destroy');
-          },
-          '取消': function() { $(this).dialog('destroy'); }
-        },
-        draggable: false,
-        resizable: false,
-        modal: true
+            $div.append($('<div></div>').attr('id', friend.id).append($photo).append($name).height('50px'));
+          }
+          $container.append($div).draggalist({
+            css: {
+              width: '240px',
+              height: '400px'
+            }
+          }).fadeIn();
+        }
       });
+    };
+    var delete_event_by_key = function(id) {
+      var delete_event = function() {
+        var info = $('#'+id).data('info');
+        $.ajax({
+          url: '/event/delete',
+          type: 'POST',
+          data: { key: id },
+          dataType: 'json',
+          success: function(res) {
+            $('#'+id).detach();
+            $('#map').unmark({ key: id });
+          },
+          error: function() { prompt_message('刪除失敗了>"<'); }
+        });
+      };
+      prompt_confirm('確定要刪除嗎?', delete_event);
     };
     $(function(){
       $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
@@ -286,6 +355,10 @@
       $('#first-use-dialog').dialog({
         autoOpen: false,
         buttons: {
+          '現在新增行程': function() {
+            $(this).dialog('close');
+            prompt_new_event();
+          },
           '匯入Facebook行程': function() {
             prompt_message('對不起，這個功能尚未完工>"<');
           },
@@ -367,7 +440,7 @@
       });
       
       $('#event-button').trigger('click');
-      get_event_by_date();
+      get_event_by_date(), get_friend();
       
       {% endif %}
     });
