@@ -2,6 +2,11 @@
 <html>
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta property="og:site_name" content="{{ app_title }}">
+  <meta property="og:title" content="{{ app_title }}">
+  <meta property="og:description" content="{{ app_title }}">
+  <meta property="og:url" content="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}">
+  <meta property="og:image" content="http://graph.facebook.com/{{ fb_app_id }}/picture?type=normal">
   <title>{{ app_title }}</title>
   <link rel="icon" href="/img/logo.png">
   <link rel="stylesheet" href="/css/style.css">	
@@ -25,7 +30,7 @@
         <span id="option">
           <span id="event-button" class="button" target="event">行程</span>
           <span id="friend-button" class="button" target="friend">好友</span>
-          <span id="account-button" class="button" target="account">帳號</span>
+          <span id="about-button" class="button" target="about">關於</span>
         </span>
         <span>Hi, {{ current_user.name|escape }}.</span>
         {% endif %}
@@ -52,8 +57,8 @@
             <div id="friend" class="menu">
               <div id="friend-list"></div>
             </div>
-            <div id="account" class="menu">
-              <!-- TODO -->
+            <div id="about" class="menu">
+              <div class="xfbml"><fb:like-box href="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}" width="240" stream="false" header="false"></fb:like-box></div>
             </div>
           </div>
         </div>
@@ -248,8 +253,8 @@
               }).dblclick(function() {
                 prompt_view_event($(this).attr('id'));
               }).hover(function() {
-                $(this).css('cursor', 'pointer');
-              }).append($title).append($content).data('info', info));
+                $(this).css('cursor', 'pointer'); }, function() {
+                $(this).css('cursor', 'auto'); }).append($title).append($content).data('info', info));
               if(event.place) {
                 $('#map').mark({
                   key: event.key,
@@ -325,7 +330,8 @@
                 });
                 $(this).addClass('ui-state-active');
               }
-            }).hover(function() { $(this).css('cursor', 'pointer'); }).append($photo).append($name));
+            }).hover(function() { $(this).css('cursor', 'pointer'); }, function() {
+              $(this).css('cursor', 'auto'); }).append($photo).append($name));
           }
           $container.append($div).draggalist({
             css: {
@@ -356,7 +362,7 @@
     $(function(){
       $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
         FB.init({ apiKey: '{{ fb_api_key }}', appId: '{{ fb_app_id }}', cookie: true, status: true });
-        FB.Event.subscribe('auth.{% if current_user %}logout{% else %}login{% endif %}', window.location.reload);
+        FB.Event.subscribe('auth.{% if current_user %}logout{% else %}login{% endif %}', function() { window.location.reload(); });
         $('.xfbml').each(function() { FB.XFBML.parse(this); });
       });
       

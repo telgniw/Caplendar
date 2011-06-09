@@ -4,23 +4,166 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>{{ app_title }}: Admin Page</title>
   <link rel="icon" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">	
   <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
 </head>
 <body>
-  <span id="clear-cache-button">Clear Memcache</span>
+  <div id="fb-root">
+    <div id="t" class="ui-widget-header ui-state-active">
+      <div class="float-left">
+        <span id="title"><img src="/img/title.png" alt="{{ app_title }}"></span>
+        <span class="xfbml"><fb:like href="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}" send="true" layout="button_count" width="450" show_faces="false" font="verdana"></fb:like></span>
+      </div>
+      <div class="float-right">
+        <span id="option">
+          <a id="home-button" class="button" href="/">首頁</a>
+        </span>
+      </div>
+    </div>
+    <div id="wrapper">
+      <div id="b">
+        <div class="float-left">
+          <div class="ui-widget-content"></div>
+        </div>
+        <div class="float-right">
+            <div id="menu-title" class="ui-widget-header">Actions</div>
+            <div id="menu-content" class="ui-widget-content">
+              <div>
+                <div><span id="flush-cache-button">Flush Memcache</span></div>
+                <div><span id="list-user-button">List All Users</span></div>
+                <div>
+                  <span id="prev-list-user-button"><span class="ui-icon ui-icon-arrow-1-w"></span></span>
+                  <span id="next-list-user-button"> <span class="ui-icon ui-icon-arrow-1-e"></span></span>
+                </div>
+              </div>
+            </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="message-dialog" title="訊息">
+    <span class="ui-icon ui-icon-info" style="float:left;"></span>
+    <span class="message" style="margin-left: 10px;"></span>
+  </div>
+  <div id="confirm-dialog" title="確認">
+    <span class="ui-icon ui-icon-alert" style="float:left;"></span>
+    <span class="message" style="margin-left: 10px;"></span>
+  </div>
   <script type="text/javascript">
-    $(function(){
-      $('#clear-cache-button').button().click(function() {
-        $.ajax({
-          url: '/admin/action/clear_cache',
-          type: 'POST',
-          dataType: 'json',
-          success: function(res) {
-            alert('success: ' + res.success);
+    var prompt_message = function(msg, obj) {
+      $('#message-dialog>.message').text(msg);
+      if(obj)
+        $('#message-dialog>.message').append(obj);
+      $('#message-dialog').dialog('open');
+    };
+    var prompt_confirm = function(msg, func) {
+      $('#confirm-dialog>.message').text(msg);
+      $('#confirm-dialog').dialog({
+        autoOpen: true,
+        buttons: {
+          '確定': function() {
+            func();
+            $(this).dialog('destroy');
+          },
+          '取消': function() { $(this).dialog('destroy'); }
+        },
+        draggable: false,
+        resizable: false,
+        modal: true
+      });
+    };
+    var get_user_list = function($div, n, off_t) {
+      $.ajax({
+        url: '/admin/action/list_user',
+        type: 'POST',
+        data: { num: n, offset: off_t },
+        dataType: 'json',
+        success: function(res) {
+          if(res.empty)
+            prompt_message('No user to be listed.');
+          else {
+            for(i=0; i<res.data.num; i++) {
+              var user = res.data.users[i];
+              FB.api('/'+user, { fields: 'name' }, function(res) {
+                $('#'+res.id).append($('<h3></h3>').text(res.name));
+              });
+              var $photo = $('<img>').attr('src', 'http://graph.facebook.com/'+user+'/picture').css('float', 'right');
+              $div.append($('<div></div>').attr('id', user).css('padding', '5px').hover(function() {
+                  $(this).addClass('ui-state-hover');
+                }, function() {
+                  $(this).removeClass('ui-state-hover'); 
+                }).click(function() {
+                  if($(this).hasClass('ui-state-active')) {
+                    $(this).removeClass('ui-state-active');
+                  }
+                  else {
+                    $(this).addClass('ui-state-active');
+                  }
+              }).append($photo).addClass('ui-state-default ui-corner-all').height('50px'));
+            }
           }
-        });
+        },
+        error: ajax_error
+      });
+    };
+    var ajax_error = function(jqXHR) { prompt_message('ajax error: '+jqXHR.status+' '+jqXHR.statusText); };
+    $(function(){
+      $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
+        FB.init({ apiKey: '{{ fb_api_key }}', appId: '{{ fb_app_id }}', cookie: true, status: true });
+      });
+      $('#b').height($(document).height()-$('#t').height());
+      $('#b>div').each(function() { $(this).height($('#b').height()); });
+      $('#menu-content').height($('#b').height());
+      $('#flush-cache-button').button().click(function() {
+        var flush_cache = function() {
+          $.ajax({
+            url: '/admin/action/flush_cache',
+            type: 'POST',
+            dataType: 'json',
+            success: function(res) { prompt_message('return value: success='+res.success); },
+            error: ajax_error
+          });
+        };
+        prompt_comfirm('Flush memcache?', flush_cache);
+      });
+      $('#list-user-button').button().click(function() {
+        var idx = { num: 10, offset: 0 };
+        $('#list-user-button').data('idx', idx);
+        var $div = $('<div></div>');
+        get_user_list($div, idx.num, idx.offset);
+        $('#b>.float-left').empty().append($div);
+      });
+      $('#prev-list-user-button').button().click(function() {
+        var idx = $('#list-user-button').data('idx');
+        if(idx && idx.offset > 0) {
+          idx.offset -= idx.num;
+          $('#list-user-button').data('idx', idx);
+          var $div = $('<div></div>');
+          get_user_list($div, idx.num, idx.offset);
+          $('#b>.float-left').empty().append($div);
+        }
+      });
+      $('#next-list-user-button').button().click(function() {
+        var idx = $('#list-user-button').data('idx');
+        if(idx) {
+          idx.offset += idx.num;
+          $('#list-user-button').data('idx', idx);
+          var $div = $('<div></div>');
+          get_user_list($div, idx.num, idx.offset);
+          $('#b>.float-left').empty().append($div);
+        }
+      });
+      $('.button').each(function() { $(this).button(); });
+      $('#message-dialog').dialog({
+        autoOpen: false,
+        buttons: {
+          '關閉': function() { $(this).dialog('close'); }
+        },
+        draggable: false,
+        resizable: false,
+        modal: true
       });
     });
   </script>
