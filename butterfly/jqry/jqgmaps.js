@@ -42,7 +42,7 @@
                 map: map,
                 markers: {}
             });
-            google.maps.event.addListener(map, 'click', function(evt) {
+            google.maps.event.addListener(map, 'dblclick', function(evt) {
                 var loc = evt.latLng;
                 var func = $(target).data('prompt');
                 func([loc.lat(), loc.lng()]);

@@ -74,7 +74,7 @@
   {% if current_user %}
   <div id="first-use-dialog" title="Hi!">
     <span>還沒有建立行程嗎?</span>
-    <span>可以直接在地圖上點選行程位置，或者點選右下方的按鈕來新增行程喔!</span>
+    <span>可以直接在地圖上點選兩下行程位置，或者點選右下方的按鈕來新增行程喔!</span>
   </div>
   <div id="event-dialog">
     <form>
@@ -95,6 +95,7 @@
     </form>
   </div>
   <div id="view-event-dialog" title="檢視行程"></div>
+  <div id="view-friend-event-dialog" title="檢視行程"></div>
   <div id="message-dialog" title="訊息">
     <span class="ui-icon ui-icon-info" style="float:left;"></span>
     <span class="message" style="margin-left: 10px;"></span>
@@ -106,6 +107,7 @@
   {% endif %}
   <script type="text/javascript">
     var title_place = function(title, place_name) { return title + (place_name? ' @ ' + place_name : ''); };
+    var event_info = function(event) { return { 'name': event.title, 'time': event.time, 'place': event.place? [event.place.latitude, event.place.longitude] : false, 'place-name': event.place_name, 'visibility': event.visibility, 'fb-event-id': event.fb_event_id }; }
     var clear_form = function($form, radio_value) {
       $('input:not(:radio)', $form).each(function() {
         $(this).val('').removeClass('ui-state-error');
@@ -146,7 +148,7 @@
         }, function(res) {
           prompt_message('行程已經分享在Facebook上囉!',
             $('<a></a>').attr('href', url).attr('target', '_blank').text('按此前往').css({
-              'float': 'right', 'right': '0'
+              'float': 'left', 'left': '2em', 'margin': '10px 0px'
             }).button());
         });
       };
@@ -172,6 +174,7 @@
               data: { key: id, 'fb-event-id': res.id },
               dataType: 'json'
             });
+            FB.api('/'+info['fb-event-id']+'/attending', 'POST');
             post_to_wall(info);
           });
         };
@@ -219,6 +222,13 @@
         $('<span></span>').text('時間: ' + info['time'])).append(
         $('<span></span>').text('隱私設定: ' + info['visibility']));
     };
+    var prompt_view_friend_event = function(id) {
+      var info = $('#'+id).data('info'), name = $('#'+id).data('name'), $content = $('<div></div>');
+      $('#view-friend-event-dialog').empty().val(id).append($content).dialog('open');
+      $content.append($('<h3></h3>').text(title_place(info['name'], info['place-name'])+'('+name+')')).append(
+        $('<span></span>').text('時間: ' + info['time'])).append(
+        $('<span></span>').text('隱私設定: ' + info['visibility']));
+    }
     var get_event_by_date = function(date) {
       if(!date)
         date = $('#datepicker').val();
@@ -236,14 +246,7 @@
             prompt_first_use();
           else {
             for(i=0; i<res.data.num; i++) {
-              var event = res.data.events[i], info = {
-                'name': event.title,
-                'time': event.time,
-                'place': event.place? [event.place.latitude, event.place.longitude] : false,
-                'place-name': event.place_name,
-                'visibility': event.visibility,
-                'fb-event-id': event.fb_event_id
-              };
+              var event = res.data.events[i], info = event_info(event);
               var $title = $('<h3></h3>').text(title_place(event.title, event.place_name));
               var $content = $('<span></span>').text(event.time);
               $div.append($('<div></div>').attr('id', event.key).click(function() {
@@ -310,18 +313,18 @@
                       prompt_message('這個朋友沒有行程耶>"<');
                     else {
                       for(i=0; i<res.data.num; i++) {
-                        var event = res.data.events[i], info = {
-                          'name': event.title,
-                          'place': event.place? [event.place.latitude, event.place.longitude] : false,
-                        };
+                        var event = res.data.events[i], info = event_info(event);
                         if(event.place) {
                           $('#map').mark({
                             key: event.key,
                             info: info,
                             img: 'http://graph.facebook.com/'+fid+'/picture',
-                            onClick: function() {}
+                            onClick: prompt_view_friend_event
                           });
                           markers.push(event.key);
+                          if(!$('#'+event.key)[0]) {
+                            $('body').append($('<span></span>').attr('id', event.key).data('name', $('h3',target).text()).data('info', info).css('display', 'none'));
+                          }
                         }
                       }
                       $(target).data('markers', markers);
@@ -358,6 +361,9 @@
         });
       };
       prompt_confirm('確定要刪除嗎?', delete_event);
+    };
+    var join_event_by_key = function(id) {
+      prompt_message('對不起，這個功能尚未完工>"<');
     };
     $(function(){
       $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
@@ -468,6 +474,19 @@
           '刪除': function() {
             $(this).dialog('close');
             delete_event_by_key($(this).val());
+          },
+          '關閉': function() { $(this).dialog('close'); }
+        },
+        draggable: false,
+        resizable: false,
+        modal: true
+      });
+      $('#view-friend-event-dialog').dialog({
+        autoOpen: false,
+        buttons: {
+          '加入我的行程': function() {
+            $(this).dialog('close');
+            join_event_by_key($(this).val());
           },
           '關閉': function() { $(this).dialog('close'); }
         },
