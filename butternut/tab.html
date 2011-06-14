@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <title>{{ app_title }}: Facebook Tab Page</title>
+  <link rel="icon" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+  <style type="text/css">
+    #fb-root>div { text-align: center; }
+    #fb-root>div>span { display: block; }
+  </style>
+</head>
+<body>
+  <div id="fb-root">
+    <div>
+      <span><img src="/img/welcome.png"></span>
+      <span><a class="button" href="http://date-map.appspot.com/" target="_blank">前往{{ app_title }}</a></span>
+    </div>
+  </div>
+  <script type="text/javascript">
+    $(function(){
+      $('.button').button({ icons: { primary: 'ui-icon-star', secondary: 'ui-icon-star' } });
+    });
+  </script>
+</body>
+</html>
