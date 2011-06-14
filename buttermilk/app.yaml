@@ -1,5 +1,5 @@
 application: date-map
-version: cat
+version: buttermilk
 runtime: python
 api_version: 1
 
@@ -15,6 +15,9 @@ handlers:
   upload: (.*)\.ico
 - url: /admin/.*
   script: admin.py
+  login: admin
+- url: /task/.*
+  script: task.py
   login: admin
 - url: /.*
   script: main.py

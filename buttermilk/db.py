@@ -37,3 +37,8 @@ class User(BaseModel):
     name = db.StringProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     updated = db.DateTimeProperty(auto_now=True)
+
+class UserPreference(BaseModel):
+    uid = db.StringProperty(required=True)
+    place = db.GeoPtProperty()
+    zoom = db.IntegerProperty()

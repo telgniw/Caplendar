@@ -42,7 +42,7 @@
                 map: map,
                 markers: {}
             });
-            google.maps.event.addListener(map, 'click', function(evt) {
+            google.maps.event.addListener(map, 'dblclick', function(evt) {
                 var loc = evt.latLng;
                 var func = $(target).data('prompt');
                 func([loc.lat(), loc.lng()]);
@@ -51,8 +51,10 @@
     };
     $.fn.mark = function(options) {
         /** key:        key for delete  <required>
+            uid:        user id         <required>
             info:       event info      <required>
             color:      icon color      <optional>
+            img:        icon image      <optional>
             onClick:    marker clicked  <optional>
         **/
         var args = {
@@ -66,23 +68,38 @@
             var markers = $(this).data('markers');
             if(options)
                 $.extend(args, options);
-            var marker = markers[args.key];
-            if(marker)
-                marker.setMap(null);
+            var marker = false;
+            if(markers[args.key]) {
+                marker = markers[args.key].marker;
+                if(marker)
+                    marker.setMap(null);
+            }
             var pos = args.info.place;
             if($.type(pos) == 'array')
                 pos = latlng(args.info.place);
-            marker = new google.maps.Marker({
-                map: map,
-                position: pos,
-                title: args.info.name,
-                icon: image(args.color)
-            });
+            if(args.img) {
+                marker = new google.maps.Marker({
+                    map: map,
+                    position: pos,
+                    title: args.info.name,
+                    icon: new google.maps.MarkerImage(args.img, new google.maps.Size(50,50), new google.maps.Point(0,0), new google.maps.Point(10,20), new google.maps.Size(20,20)),
+                    shadow: new google.maps.MarkerImage('/img/marker.png', new google.maps.Size(32,37), new google.maps.Point(0,0), new google.maps.Point(16,26)),
+                    shape: { coord: [0,0,0,37,32,37,32,0], type: 'poly' }
+                });
+            }
+            else {
+                marker = new google.maps.Marker({
+                    map: map,
+                    position: pos,
+                    title: args.info.name,
+                    icon: image(args.color)
+                });
+            }
             var target = this;
             google.maps.event.addListener(marker, 'click', function() {
               args.onClick.call(target, args.key);
             });
-            markers[args.key] = marker;
+            markers[args.key] = { marker: marker, uid: args.uid };
         });
     };
     $.fn.unmark = function(options) {
@@ -98,12 +115,18 @@
             switch(options) {
                 case 'all':
                     for(i in markers)
-                      markers[i].setMap(null);
+                      markers[i].marker.setMap(null);
+                    return;
+                case 'uid':
+                    for(i in markers) {
+                      if(!markers[i].uid)
+                        markers[i].marker.setMap(null);
+                    }
                     return;
             }
             if(options)
                 $.extend(args, options);
-            var marker = markers[args.key];
+            var marker = markers[args.key].marker;
             if(marker)
                 marker.setMap(null);
         });

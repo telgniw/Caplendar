@@ -84,8 +84,9 @@ class EventHandler(BaseHandler):
     def _post_share_(self):
         key = self.request.get('key')
         event = db.get(key)
-        event.fb_event_id = self.request.get('fb-event-id')
-        event.put()
+        if event:
+            event.fb_event_id = self.request.get('fb-event-id')
+            event.put()
         self.response.out.write(simplejson.dumps({
             'data': {
                 'key': key
