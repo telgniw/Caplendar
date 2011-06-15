@@ -82,15 +82,14 @@
               pos = map.getCenter();
             if($.type(pos) == 'array')
                 pos = latlng(args.info.place);
-            var time = args.info.time.replace(/^[0-9]{4}-[0-9]{2}-[0-9]{2}/, '');
+            var time = args.info.time.replace(/^[0-9]{4}-[0-9]{2}-[0-9]{2} /, '');
             if(args.background) {
-                marker = new MarkerWithLabel({
+                marker = new google.maps.Marker({
                     map: map,
                     position: pos,
                     title: args.info.name + ' ' + time,
                     icon: new google.maps.MarkerImage(args.img, new google.maps.Size(50,50), new google.maps.Point(0,0), new google.maps.Point(10,30), new google.maps.Size(20,20)),
                     shadow: new google.maps.MarkerImage(args.background, new google.maps.Size(32,36), new google.maps.Point(0,0), new google.maps.Point(16,36)),
-                    shape: { coord: [-2,-2,-2,38,34,38,34,-2], type: 'poly' },
                     zIndex: 0
                 });
             }
@@ -99,17 +98,16 @@
                     map: map,
                     position: pos,
                     draggable: true,
+                    raiseOnDrag: true,
                     title: args.info.name + ' ' + time,
-                    icon: new google.maps.MarkerImage(args.img, new google.maps.Size(50,32), new google.maps.Point(0,0), new google.maps.Point(25,32)),
-                    shape: { coord: [-2,-2,-2,34,52,34,52,-2], type: 'poly' },
                     labelContent: time,
-                    labelAnchor: new google.maps.Point(20,22),
-                    labelStyle: { color: 'lightyellow', fontWeight: 'bold' }
+                    labelAnchor: new google.maps.Point(16,0),
+                    labelStyle: { color: 'lightyellow', fontWeight: 'bold', opacity: '0.5', color: 'red' }
                 });
             }
             var target = this;
             if(args.onClick) {
-              google.maps.event.addListener(marker, 'click', function() {
+              google.maps.event.addListener(marker, 'click', function(evt) {
                 args.onClick.call(target, args.key);
               });
             }

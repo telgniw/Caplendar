@@ -10,6 +10,8 @@ handlers:
   static_dir: img
 - url: /jqry
   static_dir: jqry
+- url: /intro
+  static_dir: intro
 - url: /(.*)\.ico
   static_files: /\1.ico
   upload: (.*)\.ico
