@@ -38,18 +38,21 @@ class QueryHandler(BaseHandler):
             }
         }, ensure_ascii=False))
     def _get_friend_(self):
-        cache_key = self.current_user.id + 'friends'
-        friends = memcache.get(cache_key)
-        if friends:
-            friends = pickle.loads(friends)
-        else:
-            access_token = memcache.get(self.current_user.id)
-            graph = facebook.GraphAPI(access_token)
-            friends, data = [], graph.get_connections('me', 'friends')['data']
-            for user in data:
+        cache_key, graph = self.current_user.id, facebook.GraphAPI(self.cookie['access_token'])
+        cache, fb = memcache.get(cache_key), graph.get_connections('me', 'friends')['data']
+        if cache:
+            friends = pickle.loads(cache)
+            for user in fb:
+                if user['id'] in friends:
+                    continue
                 if User.get_by_key_name(user['id']):
                     friends.append(user)
-            memcache.set(cache_key, pickle.dumps(friends), time=604800)
+        else:
+            friends = []
+            for user in fb:
+                if User.get_by_key_name(user['id']):
+                    friends.append(user)
+        memcache.set(cache_key, pickle.dumps(friends), time=604800)
         self.response.out.write(simplejson.dumps({
             'data': {
                 'num': len(friends),

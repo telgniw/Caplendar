@@ -15,7 +15,7 @@ class BaseHandler(webapp.RequestHandler):
     def current_user(self):
         if not hasattr(self, '_current_user'):
             self._current_user = None
-            cookie = facebook.get_user_from_cookie(self.request.cookies, FB_APP_ID, FB_APP_SECRET)
+            cookie = self.cookie
             if cookie:
                 user = User.get_by_key_name(cookie['uid'])
                 if not user:
@@ -25,6 +25,11 @@ class BaseHandler(webapp.RequestHandler):
                         key_name=str(profile['id']), id=str(profile['id']), name=profile['name']
                     )
                     user.put()
-                memcache.set(user.id, cookie['access_token'], time=86400)
                 self._current_user = user
         return self._current_user
+    @property
+    def cookie(self):
+        if not hasattr(self, '_cookie'):
+            cookie = facebook.get_user_from_cookie(self.request.cookies, FB_APP_ID, FB_APP_SECRET)
+            self._cookie = cookie
+        return self._cookie

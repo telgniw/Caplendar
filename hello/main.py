@@ -7,14 +7,12 @@ from base import *
 from event import *
 from query import *
 
-from google.appengine.api import memcache
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 import urllib, urlparse
     
 class IndexHandler(BaseHandler):
     def get(self):
-        access_token = memcache.get(self.current_user.id) if self.current_user else None
         output = template.render('index.html', {
             'app_title': APP_TITLE,
             'current_user': self.current_user,
@@ -28,8 +26,8 @@ class IndexHandler(BaseHandler):
 
 class AppHandler(BaseHandler):
     def get(self):
+        access_token = self.cookie['access_token'] if self.cookie else None
         if self.current_user:
-            access_token = memcache.get(self.current_user.id)
             output = template.render('app.html', {
                 'app_title': APP_TITLE,
                 'current_user': self.current_user,

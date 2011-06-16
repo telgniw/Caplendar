@@ -16,7 +16,7 @@ class TaskHandler(webapp.RequestHandler):
         else:
             self.response.clear()
             self.response.set_status(404)
-    def _clear_old_():
+    def _clear_old_(self):
         bound = datetime.strptime(str(date.today() + timedelta(-7)), '%Y-%m-%d')
         qry = db.Query(Event).filter('time <', bound)
         db.delete_async(qry)

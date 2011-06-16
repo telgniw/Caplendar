@@ -8,6 +8,11 @@
   <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">	
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+  <style type="text/css">
+    #menu-content>div {
+      margin: 10px;
+    }
+  </style>
 </head>
 <body>
   <div id="fb-root">
@@ -30,8 +35,8 @@
         <div class="float-right">
             <div id="menu-title" class="ui-widget-header">Actions</div>
             <div id="menu-content" class="ui-widget-content">
+              <div><span id="flush-cache-button">Flush Memcache</span></div>
               <div>
-                <div><span id="flush-cache-button">Flush Memcache</span></div>
                 <div><span id="list-user-button">List All Users</span></div>
                 <div>
                   <span id="prev-list-user-button"><span class="ui-icon ui-icon-arrow-1-w"></span></span>
@@ -84,24 +89,28 @@
           if(res.empty)
             prompt_message('No user to be listed.');
           else {
-            for(i=0; i<res.data.num; i++) {
-              var user = res.data.users[i];
-              FB.api('/'+user, { fields: 'name' }, function(res) {
-                $('#'+res.id).append($('<h3></h3>').text(res.name));
-              });
-              var $photo = $('<img>').attr('src', 'http://graph.facebook.com/'+user+'/picture').css('float', 'right');
-              $div.append($('<div></div>').attr('id', user).css('padding', '5px').hover(function() {
-                  $(this).addClass('ui-state-hover');
-                }, function() {
-                  $(this).removeClass('ui-state-hover'); 
-                }).click(function() {
-                  if($(this).hasClass('ui-state-active')) {
-                    $(this).removeClass('ui-state-active');
-                  }
-                  else {
-                    $(this).addClass('ui-state-active');
-                  }
-              }).append($photo).addClass('ui-state-default ui-corner-all').height('50px'));
+            for(c=0; c<2; c++) {
+              var num = Math.floor(res.data.num / 2), $div2 = $('<div></div>');
+              for(i=0; i<num; i++) {
+                var user = res.data.users[num*c+i];
+                FB.api('/'+user, { fields: 'name' }, function(res) {
+                  $('#'+res.id).append($('<h3></h3>').text(res.name));
+                });
+                var $photo = $('<img>').attr('src', 'http://graph.facebook.com/'+user+'/picture').css('float', 'right');
+                $div2.append($('<div></div>').attr('id', user).css('padding', '5px').hover(function() {
+                    $(this).addClass('ui-state-hover');
+                  }, function() {
+                    $(this).removeClass('ui-state-hover'); 
+                  }).click(function() {
+                    if($(this).hasClass('ui-state-active')) {
+                      $(this).removeClass('ui-state-active');
+                    }
+                    else {
+                      $(this).addClass('ui-state-active');
+                    }
+                }).append($photo).addClass('ui-state-default ui-corner-all').height('50px'));
+              }
+              $div.append($div2.css({'width': '49%', 'float': ((c == 0)? 'left' : 'right')}));
             }
           }
         },
@@ -126,10 +135,11 @@
             error: ajax_error
           });
         };
-        prompt_comfirm('Flush memcache?', flush_cache);
+        prompt_confirm('Flush memcache?', flush_cache);
       });
       $('#list-user-button').button().click(function() {
-        var idx = { num: 10, offset: 0 };
+        var num = Math.floor($('#b').height() / 60) * 2;
+        var idx = { num: num, offset: 0 };
         $('#list-user-button').data('idx', idx);
         var $div = $('<div></div>');
         get_user_list($div, idx.num, idx.offset);
