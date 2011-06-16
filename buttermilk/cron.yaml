@@ -1,5 +1,0 @@
-cron:
-- description: clear old job
-  url: /task/clear_old
-  schedule: every day 04:00
-  timezone: Asia/Taipei

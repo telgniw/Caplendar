@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta property="og:site_name" content="{{ app_title }}">
+  <meta property="og:title" content="{{ app_title }}">
+  <meta property="og:description" content="{{ app_title }}">
+  <meta property="og:url" content="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}">
+  <meta property="og:image" content="http://graph.facebook.com/{{ fb_app_id }}/picture?type=normal">
+  <title>{{ app_title }}</title>
+  <link rel="icon" href="/img/logo.png">
+  <link rel="stylesheet" href="/css/style.css">	
+  <link rel="stylesheet" href="/css/start/jquery-ui-1.8.12.custom.css">
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.1/jquery.min.js"></script>
+  <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.13/jquery-ui.min.js"></script>
+  <script type="text/javascript" src="/jqry/jquery.plugins.min.js"></script>
+</head>
+<body>
+  <div id="fb-root">
+    <div id="t" class="ui-widget-header ui-state-active">
+      <div class="float-left">
+        <span id="title"><a href="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}" target="_blank"><img src="/img/title.png" alt="{{ app_title }}"></a></span>
+        <span class="xfbml"><fb:like href="http://www.facebook.com/apps/application.php?id={{ fb_app_id }}" send="true" layout="button_count" width="450" show_faces="false" font="verdana"></fb:like></span>
+      </div>
+      <div class="float-right">
+        <span><span id="login-button"><a href="{{ login_url }}"><img src="/img/fb_login.png"></a></span></span>
+      </div>
+    </div>
+    <div id="wrapper">
+      <div id="b">
+        <div id="welcome">
+          <span id="welcome-img"><a href="http://www.youtube.com/embed/0ZIFLJthpyI?rel=0&wmode=transparent" title="{{ app_title }}的介紹"><img src="/img/welcome.png"></a></span>
+          <span><span id="start-using-button"><a href="{{ login_url }}">開始使用</a></span></span>
+          <span class="xfbml"><fb:friendpile width="500" max_rows="1"></fb:friendpile></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script type="text/javascript">
+    $(function(){
+      $.getScript('http://connect.facebook.net/zh_TW/all.js', function() {
+        FB.init({ apiKey: '{{ fb_api_key }}', appId: '{{ fb_app_id }}', cookie: true, status: true });
+        FB.Event.subscribe('auth.{% if current_user %}logout{% else %}login{% endif %}', function() { window.location.reload(); });
+        $('.xfbml').each(function() { FB.XFBML.parse(this); });
+      });
+      
+      $('#b').height($(document).height()-$('#t').height());
+      $('#b>div').each(function() { $(this).height($('#b').height()); });
+      
+      $('#title img').tipsy({ gravity: 'w', fade: true, fallback: '讓你方便地與朋友們分享行程!' });
+      $('#login-button img').tipsy({ gravity: 'e', fade: true, fallback: '按我登入吧!' });
+      $('#welcome-img img').tipsy({ gravity: 'w', fade: true, fallback: '點擊看介紹影片吧!' });
+      $('#welcome-img a').colorbox({ iframe: true, innerWidth: '600px', innerHeight: '480px' });
+      $('#start-using-button').width('200px').button({ icons: { primary: 'ui-icon-star', secondary: 'ui-icon-star' } }).css({ fontSize: 'large' }).tipsy({ gravity: 's', fade: true, fallback: 'It\'s Free!' });
+      
+      var show_message = function() { $('#login-button img').mouseenter(); setTimeout(hide_message, 3000); };
+      var hide_message = function() { $('#login-button img').mouseleave(); setTimeout(show_message, 2000); };
+      setTimeout(show_message, 2000);
+    });
+  </script>
+</body>
+</html>
