@@ -265,6 +265,7 @@
           if(res.empty)
             prompt_first_use();
           else {
+            var center_moved = false;
             for(i=0; i<res.data.num; i++) {
               var event = res.data.events[i], info = event_info(event);
               var $title = $('<h3></h3>').text(title_place(event.title, event.place_name));
@@ -295,6 +296,10 @@
                   onClick: prompt_view_event,
                   onDrop: update_event
                 });
+                if(!center_moved) {
+                  $('#map').gmap('center', info).gmap('zoom', 15);
+                  center_moved = true;
+                }
               }
             }
           }
@@ -342,6 +347,7 @@
                     if(res.empty)
                       prompt_message('這個朋友沒有行程耶>"<');
                     else {
+                      var center_moved = false;
                       for(i=0; i<res.data.num; i++) {
                         var event = res.data.events[i], info = event_info(event);
                         if(event.place) {
@@ -354,8 +360,11 @@
                             onClick: prompt_view_friend_event
                           });
                           markers.push(event.key);
-                          if(!$('#'+event.key)[0]) {
+                          if(!$('#'+event.key)[0])
                             $('body').append($('<span></span>').attr('id', event.key).data('name', $('h3',target).text()).data('info', info).css('display', 'none'));
+                          if(!center_moved) {
+                            $('#map').gmap('center', info).gmap('zoom', 15);
+                            center_moved = true;
                           }
                         }
                       }
@@ -397,7 +406,7 @@
     var center_event_by_key = function(id) {
       var info = $('#'+id).data('info');
       if(info['place'])
-        $('#map').gmap('center', info);
+        $('#map').gmap('center', info).gmap('zoom', 18);
     };
     var tomap_event_by_key = function(id) {
       var info = $('#'+id).data('info');
@@ -497,7 +506,7 @@
       $('#event-visibility').buttonset();
       $('#event-time').datetimepicker({
         dateFormat: 'yy-mm-dd',
-        timeFormat: 'h:m',
+        timeFormat: 'hh:mm',
         hourGrid: 6,
         minuteGrid: 10
       });

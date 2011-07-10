@@ -4,6 +4,7 @@ GEOIP_KEY     = '07c5218d90f3894825d40b853a350bd557d5907878bbcd2cfde269ae3d8aebe
 
 from base import *
 
+from datetime import *
 from django.utils import simplejson
 from google.appengine.api import memcache, urlfetch
 from google.appengine.ext.webapp import template
@@ -15,6 +16,8 @@ class QueryHandler(BaseHandler):
             self._get_geopt_()
         elif what == 'friend':
             self._get_friend_()
+        elif what == 'event':
+            self._get_event_()
         else:
             self.response.clear()
             self.response.set_status(404)
@@ -43,7 +46,7 @@ class QueryHandler(BaseHandler):
         if cache:
             friends = pickle.loads(cache)
             for user in fb:
-                if user['id'] in friends:
+                if user in friends:
                     continue
                 if User.get_by_key_name(user['id']):
                     friends.append(user)
@@ -57,5 +60,22 @@ class QueryHandler(BaseHandler):
             'data': {
                 'num': len(friends),
                 'friends': friends
+            }
+        }, ensure_ascii=False))
+    def _get_event_(self):
+        offset, num = int(self.request.get('offset')), int(self.request.get('num'))
+        today = datetime.now() + timedelta(-7)
+        this_day = datetime.strptime('%d-%d-%d' % (today.year, today.month + offset, today.day), '%Y-%m-%d')
+        next_day = datetime.strptime('%d-%d-%d' % (today.year, today.month + offset + num, today.day), '%Y-%m-%d')
+        qry = db.Query(Event).filter('owner =', self.current_user.id).filter('time >=', this_day).filter('time <', next_day)
+        dates = []
+        for event in qry:
+            date = [event.time.year, event.time.month, event.time.day]
+            if not date in dates:
+                dates.append(date)
+        self.response.out.write(simplejson.dumps({
+            'data': {
+                'num': len(dates),
+                'dates': dates
             }
         }, ensure_ascii=False))

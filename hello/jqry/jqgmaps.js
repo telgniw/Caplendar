@@ -22,8 +22,11 @@
                     if(others.place) {
                         var map = $(this).data('map');
                         map.setCenter(latlng(others.place));
-                        map.setZoom(18);
                     }
+                    return;
+                case 'zoom':
+                    var map = $(this).data('map');
+                    map.setZoom(18);
                     return;
             }
             if(options)
